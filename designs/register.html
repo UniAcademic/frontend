@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>UniAcademic - Create Student Account</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {primary: "#fba005", accent: "#f59e0b", secondary: "#1e293b", "background-light": "#f8f7f5", "background-dark": "#231c0f"}, fontFamily: {sans: ["Roboto", "sans-serif"], display: ["Inter", "sans-serif"]}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}}}};</script>
+<style>
+        :root {
+            --primary-color: #020617;
+            --accent-color: #f59e0b;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f8fafc;
+        }
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, #00000008 1px, transparent 1px),
+                              linear-gradient(to bottom, #00000008 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+<!-- Subtle Academic Background Pattern -->
+<div class="fixed inset-0 z-0 opacity-10 pointer-events-none bg-grid-pattern"></div>
+<div class="relative z-10 flex grow flex-col items-center justify-center px-4 py-12">
+<!-- Logo Section -->
+<div class="mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-accent flex items-center justify-center text-primary"><span class="material-symbols-outlined text-2xl">insights</span></div>
+<h1 class="text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight uppercase tracking-tighter italic font-black">UniAcademic</h1>
+</div>
+<!-- Login Card -->
+<div class="w-full max-w-[440px] bg-white dark:bg-background-dark border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-8 md:p-10">
+<div class="mb-8">
+<h2 class="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Create Student Account</h2>
+<p class="mt-2 text-slate-600 dark:text-slate-500 flex items-center gap-2 font-bold uppercase text-[11px] tracking-wider">Enter your details to register for the student portal</p>
+</div>
+<form action="#" class="space-y-5" method="POST">
+<!-- Full Name Field -->
+<div>
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest text-[10px] font-black" for="full-name">
+            Full Name
+        </label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+<span class="material-symbols-outlined text-[20px]">person</span>
+</span>
+<input class="block w-full pl-10 pr-3 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-accent transition-all" id="full-name" name="full-name" placeholder="e.g. John Doe" required="" type="text"/>
+</div>
+</div>
+<!-- Institutional Email Field -->
+<div>
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest text-[10px] font-black" for="email">
+            Institutional Email
+        </label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+</span>
+<input class="block w-full pl-10 pr-3 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-accent transition-all" id="email" name="email" placeholder="e.g. j.doe@uni.edu" required="" type="email"/>
+</div>
+</div>
+<!-- Registration Number Field -->
+<div>
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest text-[10px] font-black" for="reg-num">
+            Registration Number
+        </label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+</span>
+<input class="block w-full pl-10 pr-3 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-accent transition-all" id="reg-num" name="reg-num" placeholder="e.g. 2024001234" required="" type="text"/>
+</div>
+</div>
+<!-- Password Field -->
+<div>
+<label class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-widest text-[10px] font-black" for="password">
+            Password
+        </label>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+<span class="material-symbols-outlined text-[20px]">lock</span>
+</span>
+<input class="block w-full pl-10 pr-3 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-accent transition-all" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full inline-flex items-center justify-center px-4 py-3.5 border border-transparent text-xs font-bold uppercase tracking-widest rounded shadow-md text-primary bg-accent hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-accent transition-colors" type="submit">
+        Create Student Account
+    </button>
+</form>
+<!-- Footer info -->
+<div class="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800"><div class="flex justify-center text-[10px] font-black uppercase tracking-widest text-slate-500">
+    Already have an account? 
+    <a class="ml-1 font-bold hover:text-primary/80 transition-colors text-accent" href="#">Log in</a>
+</div></div>
+</div>
+<!-- Illustration/Decorative Content (Screen_26 inspiration) -->
+<div class="mt-12 text-center max-w-lg hidden lg:block">
+<div class="inline-flex items-center px-4 py-2 bg-accent/20 text-accent text-[10px] font-black border border-accent/30 tracking-widest uppercase rounded-sm mb-4">
+<span class="material-symbols-outlined text-sm mr-2">school</span>
+                Campus Updates
+            </div>
+<p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest italic">
+                "The beautiful thing about learning is that no one can take it away from you." 
+                <span class="block mt-1 font-black not-italic text-slate-900 dark:text-white">— B.B. King</span>
+</p>
+</div>
+</div>
+<!-- Background Decoration Image -->
+<div class="fixed bottom-0 right-0 w-1/3 h-1/3 opacity-20 -z-10 blur-3xl bg-primary/20 rounded-full"></div>
+<div class="fixed top-0 left-0 w-1/4 h-1/4 opacity-10 -z-10 blur-3xl bg-primary/30 rounded-full"></div>
+</body></html>

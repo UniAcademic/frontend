@@ -1,0 +1,587 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Admin Master",
+      "email": "admin@uniacademic.com",
+      "password": "admin123",
+      "role": "admin",
+      "avatar": "https://i.pravatar.cc/150?img=68"
+    },
+    {
+      "id": 2,
+      "name": "Sarah Jenkins",
+      "email": "sarah@uniacademic.com",
+      "password": "prof123",
+      "role": "professor",
+      "avatar": "https://i.pravatar.cc/150?img=5",
+      "department": "Ciência da Computação"
+    },
+    {
+      "id": 3,
+      "name": "Eduardo Lima",
+      "email": "eduardo@uniacademic.com",
+      "password": "prof123",
+      "role": "professor",
+      "avatar": "https://i.pravatar.cc/150?img=11",
+      "department": "Engenharia de Software"
+    },
+    {
+      "id": 4,
+      "name": "Alice Silva",
+      "email": "alice@uniacademic.com",
+      "password": "aluno123",
+      "role": "student",
+      "avatar": "https://i.pravatar.cc/150?img=1",
+      "ra": "202310045",
+      "curso": "Ciência da Computação",
+      "status": "Ativo"
+    },
+    {
+      "id": 5,
+      "name": "Bruno Rocha",
+      "email": "bruno@uniacademic.com",
+      "password": "aluno123",
+      "role": "student",
+      "avatar": "https://i.pravatar.cc/150?img=3",
+      "ra": "202310088",
+      "curso": "Engenharia de Software",
+      "status": "Ativo"
+    }
+  ],
+  "professores": [
+    {
+      "id": 1,
+      "userId": 2,
+      "name": "Sarah Jenkins",
+      "department": "Ciência da Computação",
+      "avatar": "https://i.pravatar.cc/150?img=5",
+      "email": "sarah@uniacademic.com"
+    },
+    {
+      "id": 2,
+      "userId": 3,
+      "name": "Eduardo Lima",
+      "department": "Engenharia de Software",
+      "avatar": "https://i.pravatar.cc/150?img=11",
+      "email": "eduardo@uniacademic.com"
+    },
+    {
+      "id": 3,
+      "name": "Ana Souza",
+      "department": "Matemática",
+      "avatar": "https://i.pravatar.cc/150?img=9",
+      "email": "ana@uniacademic.com"
+    }
+  ],
+  "alunos": [
+    {
+      "id": 1,
+      "userId": 4,
+      "name": "Alice Silva",
+      "ra": "202310045",
+      "avatar": "https://i.pravatar.cc/150?img=1",
+      "status": "Ativo",
+      "cursoId": 1,
+      "curso": "Ciência da Computação",
+      "email": "alice@uniacademic.com",
+      "semestreEntrada": "2023.1"
+    },
+    {
+      "id": 2,
+      "userId": 5,
+      "name": "Bruno Rocha",
+      "ra": "202310088",
+      "avatar": "https://i.pravatar.cc/150?img=3",
+      "status": "Ativo",
+      "cursoId": 2,
+      "curso": "Engenharia de Software",
+      "email": "bruno@uniacademic.com",
+      "semestreEntrada": "2023.1"
+    },
+    {
+      "id": 3,
+      "name": "Clara Martins",
+      "ra": "202310112",
+      "avatar": "https://i.pravatar.cc/150?img=5",
+      "status": "Ativo",
+      "cursoId": 1,
+      "curso": "Ciência da Computação",
+      "email": "clara@uniacademic.com",
+      "semestreEntrada": "2023.2"
+    },
+    {
+      "id": 4,
+      "name": "Daniel Oliveira",
+      "ra": "202310244",
+      "avatar": "https://i.pravatar.cc/150?img=11",
+      "status": "Inativo",
+      "cursoId": 1,
+      "curso": "Ciência da Computação",
+      "email": "daniel@uniacademic.com",
+      "semestreEntrada": "2023.1"
+    },
+    {
+      "id": 5,
+      "name": "Fernanda Costa",
+      "ra": "202410001",
+      "avatar": "https://i.pravatar.cc/150?img=9",
+      "status": "Ativo",
+      "cursoId": 3,
+      "curso": "Matemática",
+      "email": "fernanda@uniacademic.com",
+      "semestreEntrada": "2024.1"
+    },
+    {
+      "id": 6,
+      "name": "Gabriel Santos",
+      "ra": "202410022",
+      "avatar": "https://i.pravatar.cc/150?img=12",
+      "status": "Ativo",
+      "cursoId": 2,
+      "curso": "Engenharia de Software",
+      "email": "gabriel@uniacademic.com",
+      "semestreEntrada": "2024.1"
+    },
+    {
+      "id": 7,
+      "name": "Helena Rodrigues",
+      "ra": "202410033",
+      "avatar": "https://i.pravatar.cc/150?img=16",
+      "status": "Inativo",
+      "cursoId": 1,
+      "curso": "Ciência da Computação",
+      "email": "helena@uniacademic.com",
+      "semestreEntrada": "2024.1"
+    },
+    {
+      "id": 8,
+      "name": "Igor Pereira",
+      "ra": "202410044",
+      "avatar": "https://i.pravatar.cc/150?img=15",
+      "status": "Ativo",
+      "cursoId": 1,
+      "curso": "Ciência da Computação",
+      "email": "igor@uniacademic.com",
+      "semestreEntrada": "2024.1"
+    }
+  ],
+  "cursos": [
+    {
+      "id": 1,
+      "name": "Ciência da Computação",
+      "code": "CC"
+    },
+    {
+      "id": 2,
+      "name": "Engenharia de Software",
+      "code": "ES"
+    },
+    {
+      "id": 3,
+      "name": "Matemática",
+      "code": "MAT"
+    }
+  ],
+  "turmas": [
+    {
+      "id": 1,
+      "cursoId": 1,
+      "name": "CC7P32",
+      "shift": "Manhã",
+      "semester": "2024.1",
+      "location": "Sala 304, Bloco B",
+      "capacity": 40,
+      "studentsCount": 38,
+      "status": "Ativa"
+    },
+    {
+      "id": 2,
+      "cursoId": 1,
+      "name": "CC7P33",
+      "shift": "Noite",
+      "semester": "2024.1",
+      "location": "Sala 101, Bloco A",
+      "capacity": 30,
+      "studentsCount": 30,
+      "status": "Ativa"
+    },
+    {
+      "id": 3,
+      "cursoId": 2,
+      "name": "ES2P15",
+      "shift": "Noite",
+      "semester": "2024.1",
+      "location": "LAB 04",
+      "capacity": 25,
+      "studentsCount": 20,
+      "status": "Ativa"
+    },
+    {
+      "id": 4,
+      "cursoId": 3,
+      "name": "MAT1P01",
+      "shift": "Manhã",
+      "semester": "2024.1",
+      "location": "Sala 302",
+      "capacity": 50,
+      "studentsCount": 45,
+      "status": "Ativa"
+    }
+  ],
+  "disciplinas": [
+    {
+      "id": 1,
+      "turmaId": 1,
+      "name": "Estruturas de Dados Avançadas",
+      "code": "CC-401",
+      "professorId": 1,
+      "credits": 4,
+      "workload": "80h",
+      "department": "Ciência da Computação",
+      "status": "Ativo"
+    },
+    {
+      "id": 2,
+      "turmaId": 1,
+      "name": "Inteligência Artificial",
+      "code": "CC-402",
+      "professorId": 1,
+      "credits": 4,
+      "workload": "80h",
+      "department": "Ciência da Computação",
+      "status": "Ativo"
+    },
+    {
+      "id": 3,
+      "turmaId": 1,
+      "name": "Sistemas Operacionais",
+      "code": "CC-403",
+      "professorId": 1,
+      "credits": 4,
+      "workload": "80h",
+      "department": "Ciência da Computação",
+      "status": "Ativo"
+    },
+    {
+      "id": 4,
+      "turmaId": 3,
+      "name": "Engenharia de Software II",
+      "code": "ES-203",
+      "professorId": 2,
+      "credits": 4,
+      "workload": "80h",
+      "department": "Engenharia de Software",
+      "status": "Ativo"
+    },
+    {
+      "id": 5,
+      "turmaId": 3,
+      "name": "Arquitetura de Software",
+      "code": "ES-204",
+      "professorId": 2,
+      "credits": 4,
+      "workload": "80h",
+      "department": "Engenharia de Software",
+      "status": "Ativo"
+    },
+    {
+      "id": 6,
+      "turmaId": 2,
+      "name": "Banco de Dados II",
+      "code": "CC-405",
+      "professorId": 2,
+      "credits": 4,
+      "workload": "80h",
+      "department": "Ciência da Computação",
+      "status": "Ativo"
+    }
+  ],
+  "aulas": [
+    {
+      "id": 1,
+      "disciplinaId": 1,
+      "title": "Árvores Binárias de Busca",
+      "date": "2024-03-15",
+      "time": "08:00 - 10:00",
+      "status": "Realizada",
+      "type": "Teórica"
+    },
+    {
+      "id": 2,
+      "disciplinaId": 1,
+      "title": "Árvores AVL e Balanceamento",
+      "date": "2024-03-17",
+      "time": "08:00 - 10:00",
+      "status": "Realizada",
+      "type": "Prática"
+    },
+    {
+      "id": 3,
+      "disciplinaId": 1,
+      "title": "Grafos e Algoritmos de Busca",
+      "date": "2024-03-22",
+      "time": "08:00 - 10:00",
+      "status": "Futura (Hoje)",
+      "type": "Prática"
+    },
+    {
+      "id": 4,
+      "disciplinaId": 2,
+      "title": "Introdução a Redes Neurais",
+      "date": "2024-03-20",
+      "time": "10:00 - 12:00",
+      "status": "Realizada",
+      "type": "Teórica"
+    },
+    {
+      "id": 5,
+      "disciplinaId": 4,
+      "title": "Arquitetura de Microserviços",
+      "date": "2024-03-15",
+      "time": "19:00 - 21:00",
+      "status": "Realizada",
+      "type": "Prática"
+    },
+    {
+      "id": 6,
+      "disciplinaId": 4,
+      "title": "Design Patterns GoF",
+      "date": "2024-03-17",
+      "time": "19:00 - 21:00",
+      "status": "Realizada",
+      "type": "Teórica"
+    },
+    {
+      "id": 7,
+      "disciplinaId": 4,
+      "title": "Testes Unitários e TDD",
+      "date": "2024-03-22",
+      "time": "19:00 - 21:00",
+      "status": "Futura (Hoje)",
+      "type": "Prática"
+    }
+  ],
+  "materiais": [
+    {
+      "id": 1,
+      "disciplinaId": 4,
+      "title": "Plano_Ensino_ES203.pdf",
+      "type": "PDF",
+      "size": "2.4 MB"
+    },
+    {
+      "id": 2,
+      "disciplinaId": 4,
+      "title": "Aula_01_Intro.pptx",
+      "type": "POWERPOINT",
+      "size": "15.1 MB"
+    },
+    {
+      "id": 3,
+      "disciplinaId": 1,
+      "title": "Aula_Estruturas_Dados.pdf",
+      "type": "PDF",
+      "size": "3.2 MB"
+    },
+    {
+      "id": 4,
+      "disciplinaId": 1,
+      "title": "Código_Exemplo_Grafos",
+      "type": "FOLDER",
+      "size": "--"
+    }
+  ],
+  "notas": [
+    {
+      "id": 1,
+      "alunoId": 1,
+      "disciplinaId": 1,
+      "nota": 8.5,
+      "faltas": 0
+    },
+    {
+      "id": 2,
+      "alunoId": 1,
+      "disciplinaId": 2,
+      "nota": 9.0,
+      "faltas": 2
+    },
+    {
+      "id": 3,
+      "alunoId": 1,
+      "disciplinaId": 3,
+      "nota": 7.5,
+      "faltas": 4
+    },
+    {
+      "id": 4,
+      "alunoId": 2,
+      "disciplinaId": 4,
+      "nota": 9.5,
+      "faltas": 2
+    },
+    {
+      "id": 5,
+      "alunoId": 2,
+      "disciplinaId": 5,
+      "nota": 6.2,
+      "faltas": 8
+    },
+    {
+      "id": 6,
+      "alunoId": 2,
+      "disciplinaId": 6,
+      "nota": 8.0,
+      "faltas": 1
+    }
+  ],
+  "enrollmentStats": [
+    {
+      "id": 1,
+      "month": "Jan",
+      "novos": 12,
+      "saidas": 2
+    },
+    {
+      "id": 2,
+      "month": "Fev",
+      "novos": 25,
+      "saidas": 3
+    },
+    {
+      "id": 3,
+      "month": "Mar",
+      "novos": 45,
+      "saidas": 5
+    },
+    {
+      "id": 4,
+      "month": "Abr",
+      "novos": 18,
+      "saidas": 4
+    },
+    {
+      "id": 5,
+      "month": "Mai",
+      "novos": 8,
+      "saidas": 6
+    },
+    {
+      "id": 6,
+      "month": "Jun",
+      "novos": 5,
+      "saidas": 3
+    },
+    {
+      "id": 7,
+      "month": "Jul",
+      "novos": 3,
+      "saidas": 8
+    },
+    {
+      "id": 8,
+      "month": "Ago",
+      "novos": 38,
+      "saidas": 2
+    },
+    {
+      "id": 9,
+      "month": "Set",
+      "novos": 15,
+      "saidas": 4
+    },
+    {
+      "id": 10,
+      "month": "Out",
+      "novos": 10,
+      "saidas": 3
+    },
+    {
+      "id": 11,
+      "month": "Nov",
+      "novos": 6,
+      "saidas": 5
+    },
+    {
+      "id": 12,
+      "month": "Dez",
+      "novos": 2,
+      "saidas": 7
+    }
+  ],
+  "schedule": [
+    {
+      "id": 1,
+      "title": "Estruturas de Dados Avançadas",
+      "type": "Teórica",
+      "room": "Sala 304",
+      "time": "08:00",
+      "day": "Segunda",
+      "code": "CC-401",
+      "professor": "Sarah Jenkins",
+      "isEAD": false,
+      "isActive": true
+    },
+    {
+      "id": 2,
+      "title": "Estruturas de Dados Avançadas",
+      "type": "Prática",
+      "room": "LAB 01",
+      "time": "10:00",
+      "day": "Segunda",
+      "code": "CC-401",
+      "professor": "Sarah Jenkins",
+      "isEAD": false,
+      "isActive": false
+    },
+    {
+      "id": 3,
+      "title": "Inteligência Artificial",
+      "type": "Teórica",
+      "room": "Sala 304",
+      "time": "08:00",
+      "day": "Terça",
+      "code": "CC-402",
+      "professor": "Sarah Jenkins",
+      "isEAD": false,
+      "isActive": false
+    },
+    {
+      "id": 4,
+      "title": "Engenharia de Software II",
+      "type": "Prática",
+      "room": "LAB 04",
+      "time": "19:00",
+      "day": "Segunda",
+      "code": "ES-203",
+      "professor": "Eduardo Lima",
+      "isEAD": false,
+      "isActive": false
+    },
+    {
+      "id": 5,
+      "title": "Arquitetura de Software",
+      "type": "EAD",
+      "room": "Online",
+      "time": "19:00",
+      "day": "Quarta",
+      "code": "ES-204",
+      "professor": "Eduardo Lima",
+      "isEAD": true,
+      "isActive": false
+    },
+    {
+      "id": 6,
+      "title": "Banco de Dados II",
+      "type": "Teórica",
+      "room": "Sala 101",
+      "time": "19:00",
+      "day": "Quinta",
+      "code": "CC-405",
+      "professor": "Eduardo Lima",
+      "isEAD": false,
+      "isActive": false
+    }
+  ]
+}

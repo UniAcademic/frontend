@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Disciplines Management - UniAcademic</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: 'class', theme: {extend: {colors: {primary: '#020617', accent: '#fba005', secondary: '#1e293b', 'background-light': '#f8f7f5', 'background-dark': '#231c0f'}, fontFamily: {sans: ['Inter', 'sans-serif'], display: ['Inter', 'sans-serif']}, borderRadius: {DEFAULT: '0.25rem', lg: '0.5rem', xl: '0.75rem', full: '9999px'}}}};</script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav {
+            background-color: #f0f2f4;
+            color: #111318;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111318]">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-64 bg-[#020617] text-white flex flex-col shrink-0">
+<div class="p-6 flex items-center gap-3"><div class="w-8 h-8 rounded bg-accent flex items-center justify-center text-[#020617]"><span class="material-symbols-outlined text-xl">school</span></div><span class="font-black text-xl tracking-tighter uppercase italic">UniAcademic</span></div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-accent transition-colors text-[10px] font-black uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-accent transition-colors text-[10px] font-black uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined">corporate_fare</span>
+<span class="text-sm font-medium">Departments</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-accent transition-colors text-[10px] font-black uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">book_2</span>
+<span class="text-sm font-medium">Disciplines</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-accent transition-colors text-[10px] font-black uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="text-sm font-medium">Faculty</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-400 hover:text-accent transition-colors text-[10px] font-black uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-sm font-medium">Schedule</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-800">
+<a class="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-1" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-sm font-medium">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<!-- Top Header -->
+<header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shrink-0">
+<div class="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400"><a class="hover:text-primary transition-colors" href="#">Admin</a><span class="material-symbols-outlined text-xs">chevron_right</span><a class="hover:text-primary transition-colors" href="#">Curriculum</a><span class="material-symbols-outlined text-xs">chevron_right</span><span class="text-[#111318] font-medium">Disciplines</span></div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-8 w-px bg-gray-200"></div>
+<div class="flex items-center gap-3">
+<img class="w-8 h-8 rounded-full border border-gray-200" data-alt="Admin user profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCarb5RA_mXBLcszKVtl03E7jPu7W83AQaXnBhyP29tEeGn9N5blZkMpwjqvqbbv4BJDCYxQj0LMYLZfRYdj5AZRAwa0u1zuPSDwl61ZQwEEJDrHBLW32doR0DlQ0acQZmjIuKqFjQl-C1hbxOrkRFNCnlbe0NoAqSb3a8rJQ314oLNoVGO2q2TybNbnr5hKJtgEiXJu8LQTpNPG9hFSKs8aJP_hO-iaW4vYGnXKAyGiNgCFzadqqhymuPY4ajMP7fYjAJgM1wZksML"/>
+<span class="text-sm font-semibold text-[#111318]">Dr. Aris Thorne</span><p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Academic Admin</p>
+</div>
+</div>
+</header>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-8">
+<!-- Page Title Area -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+<div>
+<h2 class="text-3xl font-black text-slate-900 uppercase tracking-tight">Disciplines Management</h2>
+<p class="mt-2 text-slate-600 flex items-center gap-2 font-bold uppercase text-[11px] tracking-wider">Configure and organize academic modules across various degree programs.</p>
+</div>
+<button class="inline-flex items-center px-4 py-2 border border-transparent text-xs font-bold uppercase tracking-widest rounded shadow-md text-[#020617] bg-accent hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-accent transition-colors">
+<span class="material-symbols-outlined text-[20px]">add_box</span>
+                        Add New Discipline
+                    </button>
+</div>
+<!-- Filters & Search Toolbar -->
+<div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-4 mb-6">
+<div class="relative flex-1 min-w-[300px]">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-gray-50 border-gray-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="Search by name, code or course..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<select class="bg-gray-50 border-gray-200 rounded-lg text-sm px-4 py-2 focus:ring-primary focus:border-primary outline-none">
+<option>All Courses</option>
+<option>B.Sc. Computer Science</option>
+<option>B.A. Literature</option>
+<option>M.Sc. Data Science</option>
+<option>B.Eng. Mechanical</option>
+</select>
+<button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</div>
+<!-- Table Container -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-200">
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Discipline Name</th>
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Academic Code</th>
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Linked Course</th>
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Status</th>
+<th class="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100">
+<!-- Row 1 -->
+<tr class="hover:bg-gray-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="font-black text-slate-900 dark:text-white uppercase tracking-tight">Advanced Calculus II</div>
+<div class="text-xs text-slate-500">Department of Mathematics</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-mono font-bold rounded">MATH-302</span>
+</td>
+<td class="px-6 py-4">
+<div class="text-sm text-gray-600">B.Sc. Mathematics</div>
+</td>
+<td class="px-6 py-4"><span class="inline-flex items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest"><span class="w-1.5 h-1.5 rounded-full bg-accent mr-1.5"></span>Ativo</span></td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" title="Delete">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-gray-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="font-black text-slate-900 dark:text-white uppercase tracking-tight">Machine Learning Basics</div>
+<div class="text-xs text-slate-500">Faculty of IT</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-mono font-bold rounded">CS-415</span>
+</td>
+<td class="px-6 py-4">
+<div class="text-sm text-gray-600">B.Sc. Computer Science</div>
+</td>
+<td class="px-6 py-4"><span class="inline-flex items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest"><span class="w-1.5 h-1.5 rounded-full bg-accent mr-1.5"></span>Ativo</span></td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" title="Delete">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-gray-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="font-black text-slate-900 dark:text-white uppercase tracking-tight">Classical Thermodynamics</div>
+<div class="text-xs text-slate-500">School of Engineering</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-mono font-bold rounded">PHYS-210</span>
+</td>
+<td class="px-6 py-4">
+<div class="text-sm text-gray-600">B.Eng. Mechanical</div>
+</td>
+<td class="px-6 py-4"><span class="inline-flex items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest"><span class="w-1.5 h-1.5 rounded-full bg-accent mr-1.5"></span>Ativo</span></td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" title="Delete">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-gray-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="font-black text-slate-900 dark:text-white uppercase tracking-tight">Modern World Literature</div>
+<div class="text-xs text-slate-500">Department of Arts</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-mono font-bold rounded">LIT-105</span>
+</td>
+<td class="px-6 py-4">
+<div class="text-sm text-gray-600">B.A. Literature</div>
+</td>
+<td class="px-6 py-4"><span class="inline-flex items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest"><span class="w-1.5 h-1.5 rounded-full bg-accent mr-1.5"></span>Ativo</span></td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" title="Delete">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-gray-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="font-black text-slate-900 dark:text-white uppercase tracking-tight">Quantum Computing 101</div>
+<div class="text-xs text-slate-500">Advanced Research Center</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-mono font-bold rounded">QC-501</span>
+</td>
+<td class="px-6 py-4">
+<div class="text-sm text-gray-600">M.Sc. Physics</div>
+</td>
+<td class="px-6 py-4"><span class="inline-flex items-center text-[10px] font-bold text-slate-500 uppercase tracking-widest"><span class="w-1.5 h-1.5 rounded-full bg-accent mr-1.5"></span>Ativo</span></td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" title="Edit">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50" title="Delete">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination -->
+<div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+<span class="text-sm text-gray-500">Showing 1 to 5 of 42 disciplines</span>
+<div class="flex gap-2">
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50">Previous</button>
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50">1</button>
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50">2</button>
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50">3</button>
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50">Next</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Toast Notification (Hidden by default, shown for demo purpose contextually) -->
+<div class="fixed bottom-8 right-8 flex flex-col gap-2 z-50">
+<div class="bg-[#111318] text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-bounce">
+<span class="material-symbols-outlined text-green-400">check_circle</span>
+<span class="text-sm font-medium">Discipline 'Physics 101' added successfully!</span>
+<button class="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-white dark:hover:bg-slate-700 disabled:opacity-50">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+<!-- Overlay Modal Backdrop (Add Discipline) - For demonstration -->
+<div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center hidden">
+<div class="bg-white w-full max-w-md rounded-xl shadow-2xl overflow-hidden">
+<div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+<h3 class="text-lg font-bold text-[#111318]">Add New Discipline</h3>
+<button class="text-gray-400 hover:text-gray-600">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6 space-y-4">
+<div>
+<label class="block text-sm font-bold text-[#111318] mb-1.5">Discipline Name</label>
+<input class="w-full px-4 py-2 bg-gray-50 border-gray-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="e.g. Advanced Calculus" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-sm font-bold text-[#111318] mb-1.5">Discipline Code</label>
+<input class="w-full px-4 py-2 bg-gray-50 border-gray-200 rounded-lg focus:ring-primary focus:border-primary text-sm" placeholder="MATH-101" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-bold text-[#111318] mb-1.5">Status</label>
+<select class="w-full px-4 py-2 bg-gray-50 border-gray-200 rounded-lg focus:ring-primary focus:border-primary text-sm">
+<option>Active</option>
+<option>Inactive</option>
+<option>Review</option>
+</select>
+</div>
+</div>
+<div>
+<label class="block text-sm font-bold text-[#111318] mb-1.5">Linked Course</label>
+<select class="w-full px-4 py-2 bg-gray-50 border-gray-200 rounded-lg focus:ring-primary focus:border-primary text-sm">
+<option value="">Select a course...</option>
+<option>B.Sc. Computer Science</option>
+<option>B.A. Literature</option>
+<option>B.Sc. Mathematics</option>
+<option>B.Eng. Mechanical</option>
+</select>
+</div>
+</div>
+<div class="px-6 py-4 bg-gray-50 flex items-center justify-end gap-3">
+<button class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-gray-700">Cancel</button>
+<button class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg font-bold text-sm">Create Discipline</button>
+</div>
+</div>
+</div>
+</body></html>
