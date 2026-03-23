@@ -73,7 +73,7 @@ const StudentDashboard = () => {
                  
                  <button 
                    onClick={() => navigate('/student/horario')}
-                   className="w-full bg-[#020617] dark:bg-white text-white dark:text-[#020617] p-4 rounded-xl flex items-center gap-4 hover:bg-slate-900 dark:hover:bg-slate-100 transition-colors border border-transparent shadow-sm"
+                   className="w-full bg-white dark:bg-[#020617] p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border border-slate-200 dark:border-slate-800 shadow-sm"
                  >
                     <div className="w-10 h-10 rounded bg-white/10 dark:bg-[#020617]/10 flex items-center justify-center">
                        <span className="material-symbols-outlined text-[#F59E0B]">calendar_month</span>
@@ -97,7 +97,10 @@ const StudentDashboard = () => {
                     </div>
                  </button>
 
-                 <button className="w-full bg-white dark:bg-[#020617] p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border border-slate-200 dark:border-slate-800">
+                 <button 
+                    onClick={() => navigate('/student/ementa')}
+                    className="w-full bg-white dark:bg-[#020617] p-4 rounded-xl flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors border border-slate-200 dark:border-slate-800"
+                 >
                     <div className="w-10 h-10 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                        <span className="material-symbols-outlined text-slate-600 dark:text-slate-300">menu_book</span>
                     </div>
@@ -167,7 +170,7 @@ const StudentDashboard = () => {
                       onClick={() => navigate(`/student/disciplina/${disc.id}`)}
                       className="bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden flex flex-col group hover:border-[#F59E0B]/50 transition-colors cursor-pointer"
                     >
-                       <div className={`h-20 relative overflow-hidden border-b ${idx === 0 ? 'bg-slate-900 dark:bg-[#020617] border-[#F59E0B]' : 'bg-gradient-to-br from-slate-100 to-white dark:from-[#1A2235] dark:to-[#0B0F19] border-slate-200 dark:border-slate-800'}`}>
+                       <div className={`h-20 relative overflow-hidden border-b ${idx === 0 ? 'bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/10 dark:to-[#020617] border-[#F59E0B]' : 'bg-gradient-to-br from-slate-100 to-white dark:from-[#1A2235] dark:to-[#0B0F19] border-slate-200 dark:border-slate-800'}`}>
                           <div className={`absolute inset-0 opacity-20 [background-image:linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] [background-size:12px_12px]`}></div>
                           <div className="p-4 relative z-10 flex justify-between items-start">
                              <span className={`inline-block px-2 py-1 ${idx === 0 ? 'bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20' : 'bg-white/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700'} text-[9px] font-black uppercase tracking-widest rounded-sm border backdrop-blur-sm`}>

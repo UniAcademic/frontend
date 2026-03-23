@@ -64,14 +64,8 @@ const ProfessorNotas = () => {
   ];
 
   return (
-    <div className="bg-[#f8f9fa] dark:bg-[#0B0F19] min-h-screen font-sans pb-16 text-slate-900 dark:text-white">
+    <div className="bg-[#f8f9fa] dark:bg-[#0B0F19] min-h-screen font-sans pb-16 text-slate-900 dark:text-white overflow-y-auto">
       
-      <Header 
-        user={professor} 
-        role="PROFESSOR" 
-        navItems={navItems} 
-      />
-
       {/* Toolbar / Context area */}
       <div className="bg-[#020617] h-10 border-b border-[#1E293B] flex items-center justify-center gap-3 uppercase text-[9px] font-black tracking-widest text-slate-500">
           <Link to="/professor" className="hover:text-white transition-colors">DISCIPLINAS</Link>

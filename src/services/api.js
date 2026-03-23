@@ -10,20 +10,88 @@ const http = axios.create({
 const api = {
   // ==================== DASHBOARD METRICS ====================
   getDashboardMetrics: async () => {
-    const [alunos, professores, turmas, disciplinas] = await Promise.all([
+    const [alunosRes, professoresRes, turmasRes, disciplinasRes, notasRes, cursosRes, aulasRes] = await Promise.all([
       http.get('/alunos'),
       http.get('/professores'),
       http.get('/turmas'),
-      http.get('/disciplinas')
+      http.get('/disciplinas'),
+      http.get('/notas'),
+      http.get('/cursos'),
+      http.get('/aulas')
     ]);
+
+    const alunos = alunosRes.data;
+    const professores = professoresRes.data;
+    const turmas = turmasRes.data;
+    const disciplinas = disciplinasRes.data;
+    const notas = notasRes.data;
+    const cursos = cursosRes.data;
+    const aulas = aulasRes.data;
+
+    // 1. Alunos por Curso
+    const alunosPorCurso = cursos.map(c => ({
+      name: c.name,
+      value: alunos.filter(a => Number(a.cursoId) === Number(c.id)).length
+    }));
+
+    // 2. Ocupação de Turmas
+    const ocupacaoTurmas = turmas.map(t => ({
+      name: t.name,
+      ocupacao: Math.round((t.studentsCount / t.capacity) * 100),
+      alunos: t.studentsCount,
+      capacidade: t.capacity
+    }));
+
+    // 3. Média de Notas por Turma
+    const mediaNotasPorTurma = turmas.map(t => {
+      const disciplinasTurma = disciplinas.filter(d => Number(d.turmaId) === Number(t.id));
+      const idsDisciplinas = disciplinasTurma.map(d => Number(d.id));
+      const notasTurma = notas.filter(n => idsDisciplinas.includes(Number(n.disciplinaId)));
+      
+      const media = notasTurma.length > 0 
+        ? notasTurma.reduce((acc, n) => acc + n.nota, 0) / notasTurma.length 
+        : 0;
+      return { name: t.name, media: parseFloat(media.toFixed(1)) };
+    }).sort((a, b) => b.media - a.media).slice(0, 5);
+
+    // 4. Professores por Departamento
+    const depts = [...new Set(professores.map(p => p.department))];
+    const professoresPorDepartamento = depts.map(d => ({
+      name: d,
+      value: professores.filter(p => p.department === d).length
+    }));
+
+    // 5. Status Acadêmico (Distribuição de Notas por Aluno)
+    const mediasAlunos = alunos.map(a => {
+      const notasAluno = notas.filter(n => Number(n.alunoId) === Number(a.id));
+      const media = notasAluno.length > 0 
+        ? notasAluno.reduce((acc, n) => acc + n.nota, 0) / notasAluno.length 
+        : 0;
+      return media;
+    });
+
+    const studentStatus = [
+      { name: 'Excelência (9-10)', value: mediasAlunos.filter(m => m >= 9).length },
+      { name: 'Bom (7-8.9)', value: mediasAlunos.filter(m => m >= 7 && m < 9).length },
+      { name: 'Regular (5-6.9)', value: mediasAlunos.filter(m => m >= 5 && m < 7).length },
+      { name: 'Crítico (< 5)', value: mediasAlunos.filter(m => m > 0 && m < 5).length }
+    ];
+
     return {
-      totalAlunos: alunos.data.length,
-      ativosAlunos: alunos.data.filter(a => a.status === 'Ativo').length,
-      inativosAlunos: alunos.data.filter(a => a.status === 'Inativo').length,
-      totalProfessores: professores.data.length,
-      totalTurmas: turmas.data.length,
-      ativasTurmas: turmas.data.filter(t => t.status === 'Ativa').length,
-      totalDisciplinas: disciplinas.data.length
+      totalAlunos: alunos.length,
+      ativosAlunos: alunos.filter(a => a.status === 'Ativo').length,
+      inativosAlunos: alunos.filter(a => a.status === 'Inativo').length,
+      totalProfessores: professores.length,
+      totalTurmas: turmas.length,
+      ativasTurmas: turmas.filter(t => t.status === 'Ativa').length,
+      totalDisciplinas: disciplinas.length,
+      charts: {
+        alunosPorCurso,
+        ocupacaoTurmas,
+        mediaNotasPorTurma,
+        professoresPorDepartamento,
+        studentStatus
+      }
     };
   },
 

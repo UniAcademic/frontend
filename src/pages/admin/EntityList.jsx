@@ -86,6 +86,39 @@ const AdminEntityList = () => {
     )
   );
 
+  const exportToExcel = () => {
+    if (!entities.length) return;
+    const headers = columns.map(col => col.label).join(",");
+    const rows = entities.map(entity => 
+      columns.map(col => `"${entity[col.key] || ''}"`).join(",")
+    ).join("\n");
+    
+    const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `uniacadem_${entityType}_excel_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPowerBI = () => {
+    if (!entities.length) return;
+    // For Power BI, we might want a slightly flatter/cleaner structure
+    const headers = ["ID", ...columns.map(col => col.label)].join(",");
+    const rows = entities.map(entity => 
+      [entity.id, ...columns.map(col => `"${entity[col.key] || ''}"`)].join(",")
+    ).join("\n");
+    
+    const csvContent = "data:text/csv;charset=utf-8," + headers + "\n" + rows;
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `uniacadem_${entityType}_powerbi_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (loading) {
     return (
       <div className="p-10 flex justify-center">
@@ -105,14 +138,31 @@ const AdminEntityList = () => {
                ADMINISTRAÇÃO DE SISTEMA • {entities.length} REGISTROS
             </p>
          </div>
-         <Link 
-           to={`${path}/novo`}
-           className="bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[10px] font-black uppercase tracking-widest py-3 px-6 rounded-xl transition-all shadow-lg shadow-[#F59E0B]/10 flex items-center gap-2"
-         >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            NOVO REGISTRO
-         </Link>
+         <div className="flex flex-wrap items-center gap-3">
+            <button 
+              onClick={exportToExcel}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-widest py-3 px-5 rounded-xl transition-all shadow-lg shadow-emerald-600/10 flex items-center gap-2"
+            >
+               <span className="material-symbols-outlined text-[16px]">file_download</span>
+               EXCEL
+            </button>
+            <button 
+              onClick={exportToPowerBI}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-black uppercase tracking-widest py-3 px-5 rounded-xl transition-all shadow-lg shadow-blue-600/10 flex items-center gap-2"
+            >
+               <span className="material-symbols-outlined text-[16px]">equalizer</span>
+               POWER BI
+            </button>
+            <Link 
+              to={`${path}/novo`}
+              className="bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[10px] font-black uppercase tracking-widest py-3 px-6 rounded-xl transition-all shadow-lg shadow-[#F59E0B]/10 flex items-center gap-2"
+            >
+               <span className="material-symbols-outlined text-[18px]">add</span>
+               NOVO REGISTRO
+            </Link>
+         </div>
       </div>
+
 
       {/* Filter & Search */}
       <div className="bg-white dark:bg-[#020617] p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-4">

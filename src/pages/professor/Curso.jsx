@@ -54,7 +54,7 @@ const ProfessorCurso = () => {
   }
 
   return (
-    <div className="bg-[#f8f9fa] dark:bg-[#0B0F19] min-h-screen font-sans pb-16">
+    <div className="bg-[#f8f9fa] dark:bg-[#0B0F19] min-h-screen font-sans overflow-y-auto overflow-x-hidden">
       
       {/* Breadcrumb Area */}
       <div className="max-w-[1200px] mx-auto px-6 pt-6 -mb-4 flex items-center gap-3">

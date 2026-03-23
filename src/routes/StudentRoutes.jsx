@@ -5,6 +5,7 @@ import StudentDashboard from '../pages/student/Dashboard';
 import StudentDisciplina from '../pages/student/Disciplina';
 import StudentBoletim from '../pages/student/Boletim';
 import StudentHorario from '../pages/student/Horario';
+import StudentEmenta from '../pages/student/Ementa';
 
 const StudentRoutes = () => {
   return (
@@ -14,6 +15,8 @@ const StudentRoutes = () => {
         <Route path="disciplina/:id" element={<StudentDisciplina />} />
         <Route path="boletim" element={<StudentBoletim />} />
         <Route path="horario" element={<StudentHorario />} />
+        <Route path="ementa" element={<StudentEmenta />} />
+        <Route path="ementa/:id" element={<StudentEmenta />} />
       </Route>
     </Routes>
   );
