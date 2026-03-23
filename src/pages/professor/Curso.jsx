@@ -19,7 +19,7 @@ const ProfessorCurso = () => {
         const professor = dashboardData?.professor || user;
         
         const allTurmas = await api.getTurmasAdmin();
-        const turmasDoCurso = allTurmas.filter(t => t.cursoId === parseInt(id));
+        const turmasDoCurso = allTurmas.filter(t => Number(t.cursoId) === Number(id));
         
         const courseName = parseInt(id) === 1 ? "Ciência da Computação" : "Engenharia de Software";
         const courseCode = parseInt(id) === 1 ? "CC" : "ES";

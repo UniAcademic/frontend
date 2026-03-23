@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -126,9 +126,6 @@ const Login = () => {
                 <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-[#F59E0B] focus:ring-[#F59E0B]" />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Lembrar-me</span>
               </label>
-              <Link to="/forgot-password" className="text-[10px] font-black uppercase tracking-widest text-[#F59E0B] hover:text-[#D97706] transition-colors">
-                Esqueci a senha
-              </Link>
             </div>
 
             <button
@@ -141,10 +138,7 @@ const Login = () => {
           </form>
 
           <p className="mt-8 text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
-            Não tem conta?{' '}
-            <Link to="/register" className="text-[#F59E0B] hover:text-[#D97706] font-black transition-colors">
-              Registre-se
-            </Link>
+            Acesso exclusivo para membros da instituição.
           </p>
 
           <div className="mt-6 p-4 bg-slate-100 dark:bg-slate-800/30 rounded-lg border border-slate-200 dark:border-slate-800">

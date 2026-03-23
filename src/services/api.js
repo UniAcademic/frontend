@@ -35,8 +35,9 @@ const api = {
   // ==================== PROFESSOR ====================
   getProfessorDashboard: async (userId) => {
     const { data: professores } = await http.get('/professores');
-    // Try to find by direct ID or by userId
-    const prof = professores.find(p => p.id === userId || p.userId === userId);
+    // Prioritize userId match over id match to avoid wrong professor
+    const uid = Number(userId);
+    const prof = professores.find(p => Number(p.userId) === uid) || professores.find(p => Number(p.id) === uid);
     if (!prof) return null;
 
     const { data: disciplinas } = await http.get('/disciplinas', { params: { professorId: prof.id } });
@@ -45,7 +46,9 @@ const api = {
 
   getProfessorDisciplinas: async (userId) => {
     const { data: professores } = await http.get('/professores');
-    const prof = professores.find(p => p.id === userId || p.userId === userId);
+    // Prioritize userId match over id match
+    const uid = Number(userId);
+    const prof = professores.find(p => Number(p.userId) === uid) || professores.find(p => Number(p.id) === uid);
     if (!prof) return [];
 
     const { data: disciplinas } = await http.get('/disciplinas', { params: { professorId: prof.id } });
@@ -53,8 +56,8 @@ const api = {
     const { data: cursos } = await http.get('/cursos');
 
     return disciplinas.map(d => {
-      const turma = turmas.find(t => t.id === d.turmaId) || {};
-      const curso = cursos.find(c => c.id === turma.cursoId) || {};
+      const turma = turmas.find(t => Number(t.id) === Number(d.turmaId)) || {};
+      const curso = cursos.find(c => Number(c.id) === Number(turma.cursoId)) || {};
       return {
         ...d,
         turma: {
@@ -68,19 +71,20 @@ const api = {
 
   getDisciplinaDetails: async (disciplinaId) => {
     const { data: disciplinas } = await http.get('/disciplinas');
-    const disciplina = disciplinas.find(d => d.id === disciplinaId);
+    const did = Number(disciplinaId);
+    const disciplina = disciplinas.find(d => Number(d.id) === did);
     if (!disciplina) return null;
 
     const { data: turmas } = await http.get('/turmas');
-    const turma = turmas.find(t => t.id === disciplina.turmaId) || {};
+    const turma = turmas.find(t => Number(t.id) === Number(disciplina.turmaId)) || {};
 
-    const { data: aulas } = await http.get('/aulas', { params: { disciplinaId } });
-    const { data: materiais } = await http.get('/materiais', { params: { disciplinaId } });
-    const { data: notas } = await http.get('/notas', { params: { disciplinaId } });
+    const { data: aulas } = await http.get('/aulas', { params: { disciplinaId: did } });
+    const { data: materiais } = await http.get('/materiais', { params: { disciplinaId: did } });
+    const { data: notas } = await http.get('/notas', { params: { disciplinaId: did } });
     const { data: alunos } = await http.get('/alunos');
 
     const alunosStats = notas.map(n => {
-      const aluno = alunos.find(a => a.id === n.alunoId) || {};
+      const aluno = alunos.find(a => Number(a.id) === Number(n.alunoId)) || {};
       return { ...aluno, nota: n.nota, faltas: n.faltas };
     });
 
@@ -89,11 +93,12 @@ const api = {
 
   getAulaDetails: async (aulaId) => {
     const { data: aulas } = await http.get('/aulas');
-    const aula = aulas.find(a => a.id === aulaId);
+    const aid = Number(aulaId);
+    const aula = aulas.find(a => Number(a.id) === aid);
     if (!aula) return null;
 
     const { data: disciplinas } = await http.get('/disciplinas');
-    const disciplina = disciplinas.find(d => d.id === aula.disciplinaId);
+    const disciplina = disciplinas.find(d => Number(d.id) === Number(aula.disciplinaId));
 
     const { data: alunos } = await http.get('/alunos');
     const attendance = alunos.map(a => ({ ...a, present: true }));
@@ -104,8 +109,9 @@ const api = {
   // ==================== STUDENT ====================
   getStudentDashboard: async (userId) => {
     const { data: alunos } = await http.get('/alunos');
-    // Try to find by direct ID or by userId
-    const aluno = alunos.find(a => a.id === userId || a.userId === userId);
+    // Prioritize userId match over id match
+    const uid = Number(userId);
+    const aluno = alunos.find(a => Number(a.userId) === uid) || alunos.find(a => Number(a.id) === uid);
     if (!aluno) return null;
 
     const { data: disciplinas } = await http.get('/disciplinas');
@@ -143,6 +149,12 @@ const api = {
   updateProfessor: async (id, payload) => { const { data } = await http.put(`/professores/${id}`, payload); return data; },
   deleteProfessor: async (id) => { await http.delete(`/professores/${id}`); return true; },
 
+  // Users (login credentials)
+  createUser: async (payload) => { const { data } = await http.post('/users', payload); return data; },
+  updateUser: async (id, payload) => { const { data } = await http.patch(`/users/${id}`, payload); return data; },
+  deleteUser: async (id) => { await http.delete(`/users/${id}`); return true; },
+  getUserByEmail: async (email) => { const { data } = await http.get('/users', { params: { email } }); return data[0] || null; },
+
   // Disciplinas Admin
   getDisciplinasAdmin: async () => {
     const { data: disciplinas } = await http.get('/disciplinas');
@@ -171,6 +183,9 @@ const api = {
 
   // Cursos
   getCursos: async () => { const { data } = await http.get('/cursos'); return data; },
+
+  // Single Turma
+  getTurma: async (id) => { const { data } = await http.get(`/turmas/${id}`); return data; },
 
   // Schedule
   getSchedule: async () => {

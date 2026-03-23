@@ -5,10 +5,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import api from '../../services/api';
 
-const alunoSchema = z.object({
+const alunoCreateSchema = z.object({
   name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
   ra: z.string().min(6, 'RA deve ter no mínimo 6 caracteres').regex(/^\d+$/, 'RA deve conter apenas números'),
   email: z.string().email('E-mail inválido'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  curso: z.string().min(1, 'Selecione um curso'),
+  status: z.enum(['Ativo', 'Inativo'], { required_error: 'Selecione um status' })
+});
+
+const alunoEditSchema = z.object({
+  name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  ra: z.string().min(6, 'RA deve ter no mínimo 6 caracteres').regex(/^\d+$/, 'RA deve conter apenas números'),
+  email: z.string().email('E-mail inválido'),
+  password: z.string().optional().refine(val => !val || val.length >= 6, 'Senha deve ter no mínimo 6 caracteres'),
   curso: z.string().min(1, 'Selecione um curso'),
   status: z.enum(['Ativo', 'Inativo'], { required_error: 'Selecione um status' })
 });
@@ -19,6 +29,8 @@ const AlunoForm = () => {
   const isEdit = !!id;
   const [loading, setLoading] = useState(isEdit);
   const [cursos, setCursos] = useState([]);
+  const [submitError, setSubmitError] = useState('');
+  const [alunoData, setAlunoData] = useState(null);
 
   const {
     register,
@@ -26,8 +38,8 @@ const AlunoForm = () => {
     reset,
     formState: { errors, isSubmitting }
   } = useForm({
-    resolver: zodResolver(alunoSchema),
-    defaultValues: { name: '', ra: '', email: '', curso: '', status: 'Ativo' }
+    resolver: zodResolver(isEdit ? alunoEditSchema : alunoCreateSchema),
+    defaultValues: { name: '', ra: '', email: '', password: '', curso: '', status: 'Ativo' }
   });
 
   useEffect(() => {
@@ -39,10 +51,12 @@ const AlunoForm = () => {
         if (isEdit) {
           const aluno = await api.getAluno(parseInt(id));
           if (aluno) {
+            setAlunoData(aluno);
             reset({
               name: aluno.name,
               ra: aluno.ra,
               email: aluno.email || '',
+              password: '',
               curso: aluno.curso,
               status: aluno.status
             });
@@ -58,15 +72,61 @@ const AlunoForm = () => {
   }, [id, isEdit, reset]);
 
   const onSubmit = async (formData) => {
+    setSubmitError('');
     try {
       if (isEdit) {
-        await api.updateAluno(parseInt(id), formData);
+        // Update aluno record
+        const alunoPayload = {
+          name: formData.name,
+          ra: formData.ra,
+          email: formData.email,
+          curso: formData.curso,
+          status: formData.status
+        };
+        await api.updateAluno(parseInt(id), { ...alunoData, ...alunoPayload });
+
+        // Update user credentials if password changed or email changed
+        if (alunoData?.userId && (formData.password || formData.email !== alunoData.email)) {
+          const userUpdate = {
+            name: formData.name,
+            email: formData.email,
+            avatar: alunoData.avatar
+          };
+          if (formData.password) {
+            userUpdate.password = formData.password;
+          }
+          await api.updateUser(alunoData.userId, userUpdate);
+        }
       } else {
-        await api.createAluno({ ...formData, avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}` });
+        // Create user first (login credentials)
+        const avatar = `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`;
+        const newUser = await api.createUser({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: 'student',
+          avatar,
+          ra: formData.ra,
+          curso: formData.curso,
+          status: formData.status
+        });
+
+        // Then create aluno record linked to user
+        await api.createAluno({
+          userId: newUser.id,
+          name: formData.name,
+          ra: formData.ra,
+          email: formData.email,
+          curso: formData.curso,
+          status: formData.status,
+          avatar,
+          semestreEntrada: new Date().getFullYear() + '.1'
+        });
       }
       navigate('/admin/alunos');
     } catch (error) {
       console.error('Error saving aluno:', error);
+      setSubmitError('Erro ao salvar. Verifique se o e-mail já não está em uso.');
     }
   };
 
@@ -88,6 +148,12 @@ const AlunoForm = () => {
           {isEdit ? 'ATUALIZAR DADOS DO ALUNO' : 'CADASTRAR NOVO ALUNO NO SISTEMA'}
         </p>
       </div>
+
+      {submitError && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-600 dark:text-red-400 font-bold">{submitError}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-[#020617] p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
@@ -121,6 +187,19 @@ const AlunoForm = () => {
             placeholder="aluno@uniacademic.com"
           />
           {errors.email && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.email.message}</p>}
+        </div>
+
+        <div>
+          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+            SENHA {isEdit && <span className="text-slate-400 normal-case tracking-normal">(deixe em branco para manter a atual)</span>}
+          </label>
+          <input
+            type="password"
+            {...register('password')}
+            className={`w-full px-4 py-3.5 bg-slate-50 dark:bg-[#0B0F19] border ${errors.password ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-lg text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent outline-none transition-all`}
+            placeholder={isEdit ? '••••••••' : 'Mínimo 6 caracteres'}
+          />
+          {errors.password && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.password.message}</p>}
         </div>
 
         <div>

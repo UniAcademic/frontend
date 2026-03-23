@@ -18,15 +18,14 @@ const ProfessorTurma = () => {
         const dashboardData = await api.getProfessorDashboard(user.id);
         const professor = dashboardData?.professor || user;
         
+        // Get turma details directly by ID
+        const turma = await api.getTurma(parseInt(id));
+        
+        if (!turma) throw new Error("Turma não encontrada");
+
         // Get all disciplinas for this professor and filter by turma
         const professorDisciplinas = await api.getProfessorDisciplinas(user.id);
-        const disciplinasDaTurma = professorDisciplinas.filter(d => d.turmaId === parseInt(id));
-        
-        // Get turma details
-        const turmas = await api.getTurmasAdmin();
-        const turma = turmas.find(t => t.id === parseInt(id));
-
-        if (!turma) throw new Error("Turma não encontrada");
+        const disciplinasDaTurma = professorDisciplinas.filter(d => Number(d.turmaId) === Number(turma.id));
 
         setData({
           professor,

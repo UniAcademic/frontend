@@ -5,9 +5,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import api from '../../services/api';
 
-const professorSchema = z.object({
+const professorCreateSchema = z.object({
   name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
   email: z.string().email('E-mail inválido'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
+  department: z.string().min(2, 'Departamento é obrigatório')
+});
+
+const professorEditSchema = z.object({
+  name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  email: z.string().email('E-mail inválido'),
+  password: z.string().optional().refine(val => !val || val.length >= 6, 'Senha deve ter no mínimo 6 caracteres'),
   department: z.string().min(2, 'Departamento é obrigatório')
 });
 
@@ -16,6 +24,8 @@ const ProfessorForm = () => {
   const navigate = useNavigate();
   const isEdit = !!id;
   const [loading, setLoading] = useState(isEdit);
+  const [submitError, setSubmitError] = useState('');
+  const [professorData, setProfessorData] = useState(null);
 
   const {
     register,
@@ -23,8 +33,8 @@ const ProfessorForm = () => {
     reset,
     formState: { errors, isSubmitting }
   } = useForm({
-    resolver: zodResolver(professorSchema),
-    defaultValues: { name: '', email: '', department: '' }
+    resolver: zodResolver(isEdit ? professorEditSchema : professorCreateSchema),
+    defaultValues: { name: '', email: '', password: '', department: '' }
   });
 
   useEffect(() => {
@@ -33,9 +43,11 @@ const ProfessorForm = () => {
         try {
           const professor = await api.getProfessor(parseInt(id));
           if (professor) {
+            setProfessorData(professor);
             reset({
               name: professor.name,
               email: professor.email || '',
+              password: '',
               department: professor.department
             });
           }
@@ -50,15 +62,54 @@ const ProfessorForm = () => {
   }, [id, isEdit, reset]);
 
   const onSubmit = async (formData) => {
+    setSubmitError('');
     try {
       if (isEdit) {
-        await api.updateProfessor(parseInt(id), formData);
+        // Update professor record
+        const professorPayload = {
+          name: formData.name,
+          email: formData.email,
+          department: formData.department
+        };
+        await api.updateProfessor(parseInt(id), { ...professorData, ...professorPayload });
+
+        // Update user credentials if password changed or email changed
+        if (professorData?.userId && (formData.password || formData.email !== professorData.email)) {
+          const userUpdate = {
+            name: formData.name,
+            email: formData.email,
+            avatar: professorData.avatar
+          };
+          if (formData.password) {
+            userUpdate.password = formData.password;
+          }
+          await api.updateUser(professorData.userId, userUpdate);
+        }
       } else {
-        await api.createProfessor({ ...formData, avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}` });
+        // Create user first (login credentials)
+        const avatar = `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`;
+        const newUser = await api.createUser({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: 'professor',
+          avatar,
+          department: formData.department
+        });
+
+        // Then create professor record linked to user
+        await api.createProfessor({
+          userId: newUser.id,
+          name: formData.name,
+          email: formData.email,
+          department: formData.department,
+          avatar
+        });
       }
       navigate('/admin/professores');
     } catch (error) {
       console.error('Error saving professor:', error);
+      setSubmitError('Erro ao salvar. Verifique se o e-mail já não está em uso.');
     }
   };
 
@@ -80,6 +131,12 @@ const ProfessorForm = () => {
           {isEdit ? 'ATUALIZAR DADOS DO PROFESSOR' : 'CADASTRAR NOVO PROFESSOR'}
         </p>
       </div>
+
+      {submitError && (
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-600 dark:text-red-400 font-bold">{submitError}</p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white dark:bg-[#020617] p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
@@ -105,12 +162,25 @@ const ProfessorForm = () => {
         </div>
 
         <div>
+          <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+            SENHA {isEdit && <span className="text-slate-400 normal-case tracking-normal">(deixe em branco para manter a atual)</span>}
+          </label>
+          <input
+            type="password"
+            {...register('password')}
+            className={`w-full px-4 py-3.5 bg-slate-50 dark:bg-[#0B0F19] border ${errors.password ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-lg text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent outline-none transition-all`}
+            placeholder={isEdit ? '••••••••' : 'Mínimo 6 caracteres'}
+          />
+          {errors.password && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.password.message}</p>}
+        </div>
+
+        <div>
           <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">DEPARTAMENTO</label>
           <input
             type="text"
             {...register('department')}
             className={`w-full px-4 py-3.5 bg-slate-50 dark:bg-[#0B0F19] border ${errors.department ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-lg text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent outline-none transition-all`}
-            placeholder="Ex: Computer Science"
+            placeholder="Ex: Ciência da Computação"
           />
           {errors.department && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.department.message}</p>}
         </div>
