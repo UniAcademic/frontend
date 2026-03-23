@@ -10,6 +10,8 @@ const StudentLayout = () => {
     { label: 'DASHBOARD', path: '/student' },
     { label: 'MEU BOLETIM', path: '/student/boletim' },
     { label: 'HORÁRIO', path: '/student/horario' },
+    { label: 'MEU PERFIL', path: '/student/perfil' },
+    { label: 'CONFIGURAÇÕES', path: '/student/configuracoes' },
   ];
 
   return (
