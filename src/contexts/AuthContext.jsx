@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { createContext, useContext, useState } from 'react';
+import db from '../../db.json';
 
 const AuthContext = createContext(null);
 
-const API_URL = 'http://localhost:3001';
+// Simulação de delay de rede
+const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
@@ -14,16 +15,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     setLoading(true);
+    await delay();
     try {
-      const { data } = await axios.get(`${API_URL}/users`, {
-        params: { email, password }
-      });
+      const loggedUser = db.users.find(u => u.email === email && u.password === password);
 
-      if (data.length === 0) {
+      if (!loggedUser) {
         throw new Error('Credenciais inválidas');
       }
 
-      const loggedUser = data[0];
       setUser(loggedUser);
       localStorage.setItem('uniacademic_user', JSON.stringify(loggedUser));
       return loggedUser;

@@ -1,32 +1,13 @@
-import axios from 'axios';
+import db from '../../db.json';
 
-const API_URL = 'http://localhost:3001';
-
-const http = axios.create({
-  baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' }
-});
+// Simulação de delay de rede
+const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
 
 const api = {
   // ==================== DASHBOARD METRICS ====================
   getDashboardMetrics: async () => {
-    const [alunosRes, professoresRes, turmasRes, disciplinasRes, notasRes, cursosRes, aulasRes] = await Promise.all([
-      http.get('/alunos'),
-      http.get('/professores'),
-      http.get('/turmas'),
-      http.get('/disciplinas'),
-      http.get('/notas'),
-      http.get('/cursos'),
-      http.get('/aulas')
-    ]);
-
-    const alunos = alunosRes.data;
-    const professores = professoresRes.data;
-    const turmas = turmasRes.data;
-    const disciplinas = disciplinasRes.data;
-    const notas = notasRes.data;
-    const cursos = cursosRes.data;
-    const aulas = aulasRes.data;
+    await delay();
+    const { alunos, professores, turmas, disciplinas, notas, cursos, aulas } = db;
 
     // 1. Alunos por Curso
     const alunosPorCurso = cursos.map(c => ({
@@ -96,32 +77,29 @@ const api = {
   },
 
   getEnrollmentStats: async () => {
-    const { data } = await http.get('/enrollmentStats');
-    return data;
+    await delay();
+    return db.enrollmentStats;
   },
 
   // ==================== PROFESSOR ====================
   getProfessorDashboard: async (userId) => {
-    const { data: professores } = await http.get('/professores');
-    // Prioritize userId match over id match to avoid wrong professor
+    await delay();
     const uid = Number(userId);
-    const prof = professores.find(p => Number(p.userId) === uid) || professores.find(p => Number(p.id) === uid);
+    const prof = db.professores.find(p => Number(p.userId) === uid) || db.professores.find(p => Number(p.id) === uid);
     if (!prof) return null;
 
-    const { data: disciplinas } = await http.get('/disciplinas', { params: { professorId: prof.id } });
+    const disciplinas = db.disciplinas.filter(d => Number(d.professorId) === Number(prof.id));
     return { professor: prof, disciplinas };
   },
 
   getProfessorDisciplinas: async (userId) => {
-    const { data: professores } = await http.get('/professores');
-    // Prioritize userId match over id match
+    await delay();
     const uid = Number(userId);
-    const prof = professores.find(p => Number(p.userId) === uid) || professores.find(p => Number(p.id) === uid);
+    const prof = db.professores.find(p => Number(p.userId) === uid) || db.professores.find(p => Number(p.id) === uid);
     if (!prof) return [];
 
-    const { data: disciplinas } = await http.get('/disciplinas', { params: { professorId: prof.id } });
-    const { data: turmas } = await http.get('/turmas');
-    const { data: cursos } = await http.get('/cursos');
+    const disciplinas = db.disciplinas.filter(d => Number(d.professorId) === Number(prof.id));
+    const { turmas, cursos } = db;
 
     return disciplinas.map(d => {
       const turma = turmas.find(t => Number(t.id) === Number(d.turmaId)) || {};
@@ -138,18 +116,16 @@ const api = {
   },
 
   getDisciplinaDetails: async (disciplinaId) => {
-    const { data: disciplinas } = await http.get('/disciplinas');
+    await delay();
     const did = Number(disciplinaId);
-    const disciplina = disciplinas.find(d => Number(d.id) === did);
+    const disciplina = db.disciplinas.find(d => Number(d.id) === did);
     if (!disciplina) return null;
 
-    const { data: turmas } = await http.get('/turmas');
-    const turma = turmas.find(t => Number(t.id) === Number(disciplina.turmaId)) || {};
-
-    const { data: aulas } = await http.get('/aulas', { params: { disciplinaId: did } });
-    const { data: materiais } = await http.get('/materiais', { params: { disciplinaId: did } });
-    const { data: notas } = await http.get('/notas', { params: { disciplinaId: did } });
-    const { data: alunos } = await http.get('/alunos');
+    const turma = db.turmas.find(t => Number(t.id) === Number(disciplina.turmaId)) || {};
+    const aulas = db.aulas.filter(a => Number(a.disciplinaId) === did);
+    const materiais = db.materiais.filter(m => Number(m.disciplinaId) === did);
+    const notas = db.notas.filter(n => Number(n.disciplinaId) === did);
+    const alunos = db.alunos;
 
     const alunosStats = notas.map(n => {
       const aluno = alunos.find(a => Number(a.id) === Number(n.alunoId)) || {};
@@ -160,33 +136,26 @@ const api = {
   },
 
   getAulaDetails: async (aulaId) => {
-    const { data: aulas } = await http.get('/aulas');
+    await delay();
     const aid = Number(aulaId);
-    const aula = aulas.find(a => Number(a.id) === aid);
+    const aula = db.aulas.find(a => Number(a.id) === aid);
     if (!aula) return null;
 
-    const { data: disciplinas } = await http.get('/disciplinas');
-    const disciplina = disciplinas.find(d => Number(d.id) === Number(aula.disciplinaId));
-
-    const { data: alunos } = await http.get('/alunos');
-    const attendance = alunos.map(a => ({ ...a, present: true }));
+    const disciplina = db.disciplinas.find(d => Number(d.id) === Number(aula.disciplinaId));
+    const attendance = db.alunos.map(a => ({ ...a, present: true }));
 
     return { aula, disciplina, attendance };
   },
 
   // ==================== STUDENT ====================
   getStudentDashboard: async (userId) => {
-    const { data: alunos } = await http.get('/alunos');
-    // Prioritize userId match over id match
+    await delay();
     const uid = Number(userId);
-    const aluno = alunos.find(a => Number(a.userId) === uid) || alunos.find(a => Number(a.id) === uid);
+    const aluno = db.alunos.find(a => Number(a.userId) === uid) || db.alunos.find(a => Number(a.id) === uid);
     if (!aluno) return null;
 
-    const { data: disciplinas } = await http.get('/disciplinas');
-    const { data: notas } = await http.get('/notas', { params: { alunoId: aluno.id } });
-
-    const enrolledDisciplinas = disciplinas.map(d => {
-      const notaData = notas.find(n => n.disciplinaId === d.id) || { nota: '-', faltas: 0 };
+    const enrolledDisciplinas = db.disciplinas.map(d => {
+      const notaData = db.notas.find(n => n.disciplinaId === d.id && n.alunoId === aluno.id) || { nota: '-', faltas: 0 };
       return { ...d, nota: notaData.nota, faltas: notaData.faltas };
     });
 
@@ -204,30 +173,32 @@ const api = {
 
   // ==================== ADMIN CRUD ====================
   // Alunos
-  getAlunos: async () => { const { data } = await http.get('/alunos'); return data; },
-  getAluno: async (id) => { const { data } = await http.get(`/alunos/${id}`); return data; },
-  createAluno: async (payload) => { const { data } = await http.post('/alunos', payload); return data; },
-  updateAluno: async (id, payload) => { const { data } = await http.put(`/alunos/${id}`, payload); return data; },
-  deleteAluno: async (id) => { await http.delete(`/alunos/${id}`); return true; },
+  getAlunos: async () => { await delay(); return db.alunos; },
+  getAluno: async (id) => { await delay(); return db.alunos.find(a => Number(a.id) === Number(id)); },
+  createAluno: async (payload) => { await delay(); return { ...payload, id: Math.floor(Math.random() * 1000) }; },
+  updateAluno: async (id, payload) => { await delay(); return { ...payload, id }; },
+  deleteAluno: async (id) => { await delay(); return true; },
 
   // Professores
-  getProfessores: async () => { const { data } = await http.get('/professores'); return data; },
-  getProfessor: async (id) => { const { data } = await http.get(`/professores/${id}`); return data; },
-  createProfessor: async (payload) => { const { data } = await http.post('/professores', payload); return data; },
-  updateProfessor: async (id, payload) => { const { data } = await http.put(`/professores/${id}`, payload); return data; },
-  deleteProfessor: async (id) => { await http.delete(`/professores/${id}`); return true; },
+  getProfessores: async () => { await delay(); return db.professores; },
+  getProfessor: async (id) => { await delay(); return db.professores.find(p => Number(p.id) === Number(id)); },
+  createProfessor: async (payload) => { await delay(); return { ...payload, id: Math.floor(Math.random() * 1000) }; },
+  updateProfessor: async (id, payload) => { await delay(); return { ...payload, id }; },
+  deleteProfessor: async (id) => { await delay(); return true; },
 
   // Users (login credentials)
-  createUser: async (payload) => { const { data } = await http.post('/users', payload); return data; },
-  updateUser: async (id, payload) => { const { data } = await http.patch(`/users/${id}`, payload); return data; },
-  deleteUser: async (id) => { await http.delete(`/users/${id}`); return true; },
-  getUserByEmail: async (email) => { const { data } = await http.get('/users', { params: { email } }); return data[0] || null; },
+  createUser: async (payload) => { await delay(); return { ...payload, id: Math.floor(Math.random() * 1000) }; },
+  updateUser: async (id, payload) => { await delay(); return { ...payload, id }; },
+  deleteUser: async (id) => { await delay(); return true; },
+  getUserByEmail: async (email) => { 
+    await delay();
+    return db.users.find(u => u.email === email) || null; 
+  },
 
   // Disciplinas Admin
   getDisciplinasAdmin: async () => {
-    const { data: disciplinas } = await http.get('/disciplinas');
-    const { data: turmas } = await http.get('/turmas');
-    const { data: cursos } = await http.get('/cursos');
+    await delay();
+    const { disciplinas, turmas, cursos } = db;
 
     return disciplinas.map(d => {
       const turma = turmas.find(t => t.id === d.turmaId) || {};
@@ -238,9 +209,8 @@ const api = {
 
   // Turmas Admin
   getTurmasAdmin: async () => {
-    const { data: turmas } = await http.get('/turmas');
-    const { data: cursos } = await http.get('/cursos');
-    const { data: disciplinas } = await http.get('/disciplinas');
+    await delay();
+    const { turmas, cursos, disciplinas } = db;
 
     return turmas.map(t => {
       const curso = cursos.find(c => c.id === t.cursoId);
@@ -250,15 +220,15 @@ const api = {
   },
 
   // Cursos
-  getCursos: async () => { const { data } = await http.get('/cursos'); return data; },
+  getCursos: async () => { await delay(); return db.cursos; },
 
   // Single Turma
-  getTurma: async (id) => { const { data } = await http.get(`/turmas/${id}`); return data; },
+  getTurma: async (id) => { await delay(); return db.turmas.find(t => Number(t.id) === Number(id)); },
 
   // Schedule
   getSchedule: async () => {
-    const { data } = await http.get('/schedule');
-    return data;
+    await delay();
+    return db.schedule;
   }
 };
 
