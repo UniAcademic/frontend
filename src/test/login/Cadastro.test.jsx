@@ -51,7 +51,7 @@ test("Deve permitir preencher o formulário de novo aluno", async () => {
     // Seletores corrigidos e mais seguros
     const nomeInput = screen.getByPlaceholderText(/Nome do aluno/i)
     const raInput = screen.getByPlaceholderText(/202410001/i)
-    const emailInput = screen.getByPlaceholderText(/aluno@uniacademic.com/i)
+    const emailInput = screen.getByPlaceholderText(/aluuno@uniacademic.com/i)
     const submitButton = screen.getByRole('button', { name: /CADASTRAR ALUNO/i })
 
     await user.type(nomeInput, 'Danilo')
