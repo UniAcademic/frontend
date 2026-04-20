@@ -154,29 +154,38 @@ export const AuthProvider = ({ children }) => {
 
       const jwtPayload = decodeJwtPayload(accessToken);
 
-      const apiUserId = authData?.id || jwtPayload?.id || null;
+      // Fetch user profile by matricula (authoritative source for name/email)
+      // Try with Bearer token first, then without (coordenador may lack SCOPE_USUARIO:CONSULTAR)
       let profile = null;
-
-      if (apiUserId) {
+      const profileUrl = `${USER_API_URL}/usuarios/matricula/${identifier}`;
+      try {
+        const profileClient = axios.create({
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+        const profileResponse = await profileClient.get(profileUrl);
+        profile = profileResponse?.data || null;
+      } catch {
+        // Retry without token (some APIs allow unauthenticated profile lookup)
         try {
-          const response = await axios.get(`${USER_API_URL}/usuarios/${apiUserId}`);
-          profile = response?.data || null;
+          const profileResponse = await axios.create({
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+          }).get(profileUrl);
+          profile = profileResponse?.data || null;
         } catch {
           profile = null;
         }
       }
-
-      if (!profile) {
-        try {
-          const response = await axios.get(`${USER_API_URL}/usuarios/matricula/${identifier}`);
-          profile = response?.data || null;
-        } catch {
-          profile = null;
-        }
+      if (profile) {
+        console.log('[AUTH] Profile loaded:', profile.nome || profile.name);
+      } else {
+        console.warn('[AUTH] Profile fetch failed - name will use fallback');
       }
 
       // Priority: JWT roles > profile roles > tipo_usuario fields
-      // JWT is the authoritative source for role-based access control
       const jwtRoles = normalizeRoleList(jwtPayload?.roles);
       const roleCandidates = [
         ...jwtRoles,
@@ -196,13 +205,13 @@ export const AuthProvider = ({ children }) => {
       const jwtAuthorities = jwtPayload?.authorities || [];
 
       const loggedUser = {
-        id: profile?.id || apiUserId || jwtPayload?.sub || identifier,
-        apiUserId: profile?.id || apiUserId || null,
+        id: profile?.id || jwtPayload?.id || jwtPayload?.sub || identifier,
+        apiUserId: profile?.id || jwtPayload?.id || null,
         matricula: profile?.matricula || jwtPayload?.sub || identifier,
         ra: profile?.matricula || jwtPayload?.sub || identifier,
-        name: profile?.nome || profile?.name || authData?.nome || DEMO_USERS[identifier]?.nome || `Usuário ${identifier}`,
-        email: profile?.email || authData?.email || '',
-        tipo_usuario: profile?.tipo_usuario || authData?.tipo_usuario || null,
+        name: profile?.nome || profile?.name || profile?.nomeCompleto || DEMO_USERS[identifier]?.nome || 'Usuário',
+        email: profile?.email || '',
+        tipo_usuario: profile?.tipo_usuario || null,
         role,
         roles: roleCandidates,
         authorities: jwtAuthorities,

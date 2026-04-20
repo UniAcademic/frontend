@@ -28,7 +28,7 @@ const Login = () => {
     setServerError('');
     try {
       const user = await login(formData.identifier, formData.password);
-      const redirectMap = { admin: '/admin', professor: '/professor', student: '/student' };
+      const redirectMap = { admin: '/admin', coordenador: '/coordenador', professor: '/professor', student: '/student' };
       navigate(redirectMap[user.role] || '/login');
     } catch (error) {
       setServerError(error.message || 'Credenciais inválidas. Verifique sua matrícula e senha.');
@@ -145,6 +145,7 @@ const Login = () => {
             <p className="text-[10px] text-slate-500 font-mono">Aluno: 00100009 / 2201ads91</p>
             <p className="text-[10px] text-slate-500 font-mono">Professor: 00100010 / 2201ads91</p>
             <p className="text-[10px] text-slate-500 font-mono">Admin: 00100011 / 2201ads91</p>
+            <p className="text-[10px] text-slate-500 font-mono">Coordenador: 00100027 / 2201ads91</p>
           </div>
         </div>
       </div>

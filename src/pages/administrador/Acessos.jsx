@@ -12,6 +12,10 @@ const Acessos = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ acesso: '', descricao: '' });
   const [saving, setSaving] = useState(false);
+  const [editingAcesso, setEditingAcesso] = useState(null);
+  const [editForm, setEditForm] = useState({ acesso: '', descricao: '' });
+  const [originalForm, setOriginalForm] = useState(null);
+  const [editSaving, setEditSaving] = useState(false);
 
   const getAuthHeaders = () => ({
     headers: { Authorization: `Bearer ${user?.accessToken}` }
@@ -60,6 +64,54 @@ const Acessos = () => {
   const filtered = (Array.isArray(acessos) ? acessos : []).filter(a =>
     (a.acesso || a.nome || a.descricao || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const startEdit = (a) => {
+    setEditingAcesso(a.id);
+    const snapshot = { acesso: a.acesso || a.nome || '', descricao: a.descricao || '' };
+    setEditForm(snapshot);
+    setOriginalForm(snapshot);
+  };
+
+  const cancelEdit = () => {
+    setEditingAcesso(null);
+    setEditForm({ acesso: '', descricao: '' });
+    setOriginalForm(null);
+  };
+
+  const getChangedFields = () => {
+    if (!originalForm) return {};
+    const changed = {};
+    for (const key of Object.keys(editForm)) {
+      if (editForm[key] !== originalForm[key]) changed[key] = editForm[key];
+    }
+    return changed;
+  };
+
+  const handleUpdate = async (acessoId) => {
+    const changed = getChangedFields();
+    if (Object.keys(changed).length === 0) {
+      cancelEdit();
+      return;
+    }
+    setEditSaving(true);
+    try {
+      const res = await fetch(`${USER_API_URL}/acessos/${acessoId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.accessToken}` },
+        body: JSON.stringify(changed)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.mensagem || `Erro ${res.status}`);
+      }
+      cancelEdit();
+      fetchAcessos();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
   return (
     <div className="p-8 flex flex-col gap-8">
@@ -118,6 +170,7 @@ const Acessos = () => {
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">ID</th>
                   <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">ACESSO</th>
                   <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">DESCRIÇÃO</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">AÇÕES</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -125,9 +178,40 @@ const Acessos = () => {
                   <tr key={a.id || a.acesso} className="hover:bg-slate-50 dark:hover:bg-slate-800/10 transition-colors">
                     <td className="px-8 py-5"><span className="text-[10px] font-black text-slate-400">#{a.id}</span></td>
                     <td className="px-6 py-5">
-                      <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded">{a.acesso || a.nome}</span>
+                      {editingAcesso === a.id ? (
+                        <input type="text" value={editForm.acesso} onChange={e => setEditForm({...editForm, acesso: e.target.value})}
+                          className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
+                      ) : (
+                        <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 rounded">{a.acesso || a.nome}</span>
+                      )}
                     </td>
-                    <td className="px-6 py-5"><span className="text-xs text-slate-500">{a.descricao}</span></td>
+                    <td className="px-6 py-5">
+                      {editingAcesso === a.id ? (
+                        <input type="text" value={editForm.descricao} onChange={e => setEditForm({...editForm, descricao: e.target.value})}
+                          className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
+                      ) : (
+                        <span className="text-xs text-slate-500">{a.descricao}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-5 text-right">
+                      {editingAcesso === a.id ? (
+                        <div className="flex items-center justify-end gap-2">
+                          <button onClick={() => handleUpdate(a.id)} disabled={editSaving}
+                            className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 flex items-center justify-center transition-colors disabled:opacity-50" title="Salvar">
+                            <span className="material-symbols-outlined text-[18px]">check</span>
+                          </button>
+                          <button onClick={cancelEdit}
+                            className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 flex items-center justify-center transition-colors" title="Cancelar">
+                            <span className="material-symbols-outlined text-[18px]">close</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <button onClick={() => startEdit(a)}
+                          className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 flex items-center justify-center transition-colors" title="Editar Acesso">
+                          <span className="material-symbols-outlined text-[18px]">edit</span>
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

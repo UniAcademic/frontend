@@ -14,6 +14,10 @@ const Roles = () => {
   const [saving, setSaving] = useState(false);
   const [showLinkForm, setShowLinkForm] = useState(null);
   const [acessoInput, setAcessoInput] = useState('');
+  const [editingRole, setEditingRole] = useState(null);
+  const [editForm, setEditForm] = useState({ role: '', descricao: '' });
+  const [originalForm, setOriginalForm] = useState(null);
+  const [editSaving, setEditSaving] = useState(false);
 
   const getAuthHeaders = () => ({
     headers: { Authorization: `Bearer ${user?.accessToken}` }
@@ -83,6 +87,54 @@ const Roles = () => {
     (r.role || r.nome || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const startEdit = (r) => {
+    setEditingRole(r.id);
+    const snapshot = { role: r.role || r.nome || '', descricao: r.descricao || '' };
+    setEditForm(snapshot);
+    setOriginalForm(snapshot);
+  };
+
+  const cancelEdit = () => {
+    setEditingRole(null);
+    setEditForm({ role: '', descricao: '' });
+    setOriginalForm(null);
+  };
+
+  const getChangedFields = () => {
+    if (!originalForm) return {};
+    const changed = {};
+    for (const key of Object.keys(editForm)) {
+      if (editForm[key] !== originalForm[key]) changed[key] = editForm[key];
+    }
+    return changed;
+  };
+
+  const handleUpdate = async (roleId) => {
+    const changed = getChangedFields();
+    if (Object.keys(changed).length === 0) {
+      cancelEdit();
+      return;
+    }
+    setEditSaving(true);
+    try {
+      const res = await fetch(`${USER_API_URL}/roles/${roleId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.accessToken}` },
+        body: JSON.stringify(changed)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.mensagem || `Erro ${res.status}`);
+      }
+      cancelEdit();
+      fetchRoles();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   return (
     <div className="p-8 flex flex-col gap-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -148,8 +200,22 @@ const Roles = () => {
                 {filtered.map(r => (
                   <tr key={r.id || r.role} className="hover:bg-slate-50 dark:hover:bg-slate-800/10 transition-colors">
                     <td className="px-8 py-5"><span className="text-[10px] font-black text-slate-400">#{r.id}</span></td>
-                    <td className="px-6 py-5"><span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">{r.role || r.nome}</span></td>
-                    <td className="px-6 py-5"><span className="text-xs text-slate-500">{r.descricao}</span></td>
+                    <td className="px-6 py-5">
+                      {editingRole === r.id ? (
+                        <input type="text" value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})}
+                          className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
+                      ) : (
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">{r.role || r.nome}</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-5">
+                      {editingRole === r.id ? (
+                        <input type="text" value={editForm.descricao} onChange={e => setEditForm({...editForm, descricao: e.target.value})}
+                          className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
+                      ) : (
+                        <span className="text-xs text-slate-500">{r.descricao}</span>
+                      )}
+                    </td>
                     <td className="px-6 py-5">
                       <div className="flex flex-wrap gap-1">
                         {(r.acessos || []).map((a, i) => (
@@ -168,11 +234,31 @@ const Roles = () => {
                       )}
                     </td>
                     <td className="px-8 py-5 text-right">
-                      <button onClick={() => setShowLinkForm(showLinkForm === (r.role || r.nome) ? null : (r.role || r.nome))}
-                        className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-500 flex items-center justify-center transition-colors"
-                        title="Vincular Acesso">
-                        <span className="material-symbols-outlined text-[18px]">link</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {editingRole === r.id ? (
+                          <>
+                            <button onClick={() => handleUpdate(r.id)} disabled={editSaving}
+                              className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 flex items-center justify-center transition-colors disabled:opacity-50" title="Salvar">
+                              <span className="material-symbols-outlined text-[18px]">check</span>
+                            </button>
+                            <button onClick={cancelEdit}
+                              className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 flex items-center justify-center transition-colors" title="Cancelar">
+                              <span className="material-symbols-outlined text-[18px]">close</span>
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button onClick={() => startEdit(r)}
+                              className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 flex items-center justify-center transition-colors" title="Editar Role">
+                              <span className="material-symbols-outlined text-[18px]">edit</span>
+                            </button>
+                            <button onClick={() => setShowLinkForm(showLinkForm === (r.role || r.nome) ? null : (r.role || r.nome))}
+                              className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-500 flex items-center justify-center transition-colors" title="Vincular Acesso">
+                              <span className="material-symbols-outlined text-[18px]">link</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
