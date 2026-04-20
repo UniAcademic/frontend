@@ -2,16 +2,16 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Route Guard
-import ProtectedRoute from '@routes/ProtectedRoute';
+import ProtectedRoute from './ProtectedRoute';
 
 // Entity Routes
-import AdminRoutes from '@routes/AdminRoutes';
-import CoordenadorRoutes from '@routes/CoordenadorRoutes';
-import ProfessorRoutes from '@routes/ProfessorRoutes';
-import StudentRoutes from '@routes/StudentRoutes';
+import AdminRoutes from './AdminRoutes';
+import CoordenadorRoutes from './CoordenadorRoutes';
+import ProfessorRoutes from './ProfessorRoutes';
+import StudentRoutes from './StudentRoutes';
 
 // Auth Pages
-import Login from '@pages/auth/Login';
+import Login from '@/pages/auth/Login';
 
 const AppRoutes = () => {
   return (

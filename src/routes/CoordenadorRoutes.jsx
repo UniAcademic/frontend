@@ -1,11 +1,11 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import AdminLayout from '@layouts/AdminLayout';
-import AdminDashboard from '@pages/admin/Dashboard';
-import AdminEntityList from '@pages/admin/EntityList';
-import AdminEntityForm from '@pages/admin/EntityForm';
-import AlunoForm from '@pages/admin/AlunoForm';
-import ProfessorForm from '@pages/admin/ProfessorForm';
+import AdminLayout from '@/layouts/AdminLayout';
+import AdminDashboard from '@/pages/admin/Dashboard';
+import AdminEntityList from '@/pages/admin/EntityList';
+import AdminEntityForm from '@/pages/admin/EntityForm';
+import AlunoForm from '@/pages/admin/AlunoForm';
+import ProfessorForm from '@/pages/admin/ProfessorForm';
 
 const CoordenadorRoutes = () => {
   return (

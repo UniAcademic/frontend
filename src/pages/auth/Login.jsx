@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, 'Matrícula é obrigatória'),

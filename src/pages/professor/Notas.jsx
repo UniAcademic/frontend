@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import api from '@services/api';
-import Header from '@components/Header';
+import api from '@/services/api';
+import Header from '@/components/Header';
 
 const ProfessorNotas = () => {
   const { id } = useParams();
