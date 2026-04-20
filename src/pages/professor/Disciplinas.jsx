@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import api from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
+import api from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ProfessorDisciplinas = () => {
   const { id } = useParams();
@@ -49,6 +49,17 @@ const ProfessorDisciplinas = () => {
 
   const { disciplina, turma, aulas, materiais, alunos, professor } = data;
 
+  // Calculate dynamic metrics
+  const totalStudents = alunos.length;
+  const classAverage = totalStudents > 0 
+    ? (alunos.reduce((acc, a) => acc + a.nota, 0) / totalStudents).toFixed(1) 
+    : '0.0';
+  
+  const totalLessons = aulas.length;
+  const averageAttendance = (totalStudents > 0 && totalLessons > 0)
+    ? Math.round(alunos.reduce((acc, a) => acc + (Math.max(0, 100 - (a.faltas / totalLessons * 100))), 0) / totalStudents)
+    : 100;
+
   return (
     <div className="bg-[#f8f9fa] dark:bg-[#0B0F19] min-h-screen font-sans overflow-y-auto overflow-x-hidden">
       
@@ -89,22 +100,20 @@ const ProfessorDisciplinas = () => {
           <div className="bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-5">
             <div className="flex justify-between items-start mb-2">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">MÉDIA DA TURMA</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded">+2.1%</span>
             </div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mb-4">7.8 <span className="text-sm font-bold text-slate-400">/ 10</span></p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white mb-4">{classAverage} <span className="text-sm font-bold text-slate-400">/ 10</span></p>
             <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-slate-900 dark:bg-[#F59E0B] h-full" style={{ width: '78%' }}></div>
+              <div className="bg-slate-900 dark:bg-[#F59E0B] h-full" style={{ width: `${parseFloat(classAverage) * 10}%` }}></div>
             </div>
           </div>
 
           <div className="bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm p-5">
             <div className="flex justify-between items-start mb-2">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">FREQUÊNCIA MÉDIA</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-50 dark:bg-red-900/20 px-1.5 py-0.5 rounded">-0.5%</span>
             </div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mb-4">92%</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white mb-4">{averageAttendance}%</p>
             <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-              <div className="bg-teal-500 h-full" style={{ width: '92%' }}></div>
+              <div className="bg-teal-500 h-full" style={{ width: `${averageAttendance}%` }}></div>
             </div>
           </div>
 

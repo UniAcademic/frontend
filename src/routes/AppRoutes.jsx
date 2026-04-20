@@ -6,11 +6,12 @@ import ProtectedRoute from './ProtectedRoute';
 
 // Entity Routes
 import AdminRoutes from './AdminRoutes';
+import CoordenadorRoutes from './CoordenadorRoutes';
 import ProfessorRoutes from './ProfessorRoutes';
 import StudentRoutes from './StudentRoutes';
 
 // Auth Pages
-import Login from '../pages/auth/Login';
+import Login from '@/pages/auth/Login';
 
 const AppRoutes = () => {
   return (
@@ -20,9 +21,14 @@ const AppRoutes = () => {
       <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
 
-      {/* Admin Routes */}
+      {/* Admin Routes (system-level: users, roles, acessos + academic) */}
       <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
         <Route path="/admin/*" element={<AdminRoutes />} />
+      </Route>
+
+      {/* Coordenador Routes (academic: alunos, professores, turmas, disciplinas) */}
+      <Route element={<ProtectedRoute allowedRoles={['coordenador']} />}>
+        <Route path="/coordenador/*" element={<CoordenadorRoutes />} />
       </Route>
 
       {/* Professor Routes */}

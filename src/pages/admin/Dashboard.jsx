@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
-import EnrollmentChart from '../../components/charts/EnrollmentChart';
+import api from '@/services/api';
+import EnrollmentChart from '@/components/charts/EnrollmentChart';
 import { 
   StudentsByCoursePie, 
   TurmaOccupancyBar, 
   GradesByTurmaBar, 
   ProfessorDeptPie,
   StudentStatusPie
-} from '../../components/charts/AdminCharts';
+} from '@/components/charts/AdminCharts';
 
 const AdminDashboard = () => {
   const [metrics, setMetrics] = useState(null);

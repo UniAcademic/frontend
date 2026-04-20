@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import Header from '../components/Header';
-import { useAuth } from '../contexts/AuthContext';
+import Header from '@/components/Header';
+import { useAuth } from '@/contexts/AuthContext';
 
 const StudentLayout = () => {
   const { user } = useAuth();
@@ -10,8 +10,6 @@ const StudentLayout = () => {
     { label: 'DASHBOARD', path: '/student' },
     { label: 'MEU BOLETIM', path: '/student/boletim' },
     { label: 'HORÁRIO', path: '/student/horario' },
-    { label: 'MEU PERFIL', path: '/student/perfil' },
-    { label: 'CONFIGURAÇÕES', path: '/student/configuracoes' },
   ];
 
   return (

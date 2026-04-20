@@ -1,7 +1,68 @@
+import axios from 'axios';
 import db from '../../db.json';
+
+const USER_API_URL = '/api/ms-usuario';
 
 // Simulação de delay de rede
 const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Authenticated HTTP client for real microservices
+const httpAuth = axios.create({
+  baseURL: USER_API_URL,
+  headers: { 'Content-Type': 'application/json' }
+});
+
+// Interceptor: attach Bearer token to all httpAuth requests
+httpAuth.interceptors.request.use((config) => {
+  const token = localStorage.getItem('uniacademic_access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Interceptor: handle 401 (expired token) globally
+httpAuth.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem('uniacademic_access_token');
+      localStorage.removeItem('uniacademic_refresh_token');
+      localStorage.removeItem('uniacademic_user');
+      delete axios.defaults.headers.common.Authorization;
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+const ROLE_FALLBACK_MOCK_USER_ID = {
+  admin: 1,
+  professor: 2,
+  student: 4
+};
+
+const resolveMockContext = (userRef, fallbackRole) => {
+  if (userRef && typeof userRef === 'object') {
+    return {
+      rawId: Number(userRef.id),
+      mockUserId: Number(userRef.mockUserId),
+      role: userRef.role || fallbackRole || null
+    };
+  }
+  return {
+    rawId: Number(userRef),
+    mockUserId: Number(userRef),
+    role: fallbackRole || null
+  };
+};
+
+const pickEffectiveMockUserId = ({ mockUserId, rawId, role }) => {
+  if (Number.isFinite(mockUserId) && mockUserId > 0) return mockUserId;
+  if (Number.isFinite(rawId) && rawId > 0) return rawId;
+  const roleFallback = ROLE_FALLBACK_MOCK_USER_ID[role];
+  return Number.isFinite(roleFallback) ? roleFallback : null;
+};
 
 const api = {
   // ==================== DASHBOARD METRICS ====================
@@ -82,9 +143,10 @@ const api = {
   },
 
   // ==================== PROFESSOR ====================
-  getProfessorDashboard: async (userId) => {
+  getProfessorDashboard: async (userRef) => {
     await delay();
-    const uid = Number(userId);
+    const context = resolveMockContext(userRef, 'professor');
+    const uid = pickEffectiveMockUserId(context);
     const prof = db.professores.find(p => Number(p.userId) === uid) || db.professores.find(p => Number(p.id) === uid);
     if (!prof) return null;
 
@@ -92,9 +154,10 @@ const api = {
     return { professor: prof, disciplinas };
   },
 
-  getProfessorDisciplinas: async (userId) => {
+  getProfessorDisciplinas: async (userRef) => {
     await delay();
-    const uid = Number(userId);
+    const context = resolveMockContext(userRef, 'professor');
+    const uid = pickEffectiveMockUserId(context);
     const prof = db.professores.find(p => Number(p.userId) === uid) || db.professores.find(p => Number(p.id) === uid);
     if (!prof) return [];
 
@@ -148,9 +211,10 @@ const api = {
   },
 
   // ==================== STUDENT ====================
-  getStudentDashboard: async (userId) => {
+  getStudentDashboard: async (userRef) => {
     await delay();
-    const uid = Number(userId);
+    const context = resolveMockContext(userRef, 'student');
+    const uid = pickEffectiveMockUserId(context);
     const aluno = db.alunos.find(a => Number(a.userId) === uid) || db.alunos.find(a => Number(a.id) === uid);
     if (!aluno) return null;
 
@@ -229,7 +293,74 @@ const api = {
   getSchedule: async () => {
     await delay();
     return db.schedule;
+  },
+
+  // ==================== REAL MICROSERVICE APIs ====================
+  getUserProfile: async (matricula) => {
+    const { data } = await httpAuth.get(`/usuarios/matricula/${matricula}`);
+    return data;
+  },
+
+  getUserById: async (id) => {
+    const { data } = await httpAuth.get(`/usuarios/${id}`);
+    return data;
+  },
+
+  // ==================== REAL API: USUARIOS (ms-usuario) ====================
+  getUsuariosAPI: async (tipoFilter = null) => {
+    const allUsers = [];
+    let page = 0;
+    let totalPages = 1;
+
+    while (page < totalPages) {
+      const { data } = await httpAuth.get(`/usuarios?page=${page}&size=20&sort=id`);
+      if (data.content) {
+        allUsers.push(...data.content);
+        totalPages = data.totalPages || 1;
+      } else if (Array.isArray(data)) {
+        allUsers.push(...data);
+        break;
+      }
+      page++;
+    }
+
+    if (tipoFilter) {
+      return allUsers.filter(u => {
+        const tipo = (u.tipo_usuario || '').toUpperCase();
+        return tipo === tipoFilter.toUpperCase();
+      });
+    }
+    return allUsers;
+  },
+
+  getAlunosAPI: async () => {
+    const users = await api.getUsuariosAPI('ALUNO');
+    return users.map(u => ({
+      id: u.id || u.matricula,
+      name: u.nome || u.name || '',
+      ra: u.matricula || '',
+      email: u.email || '',
+      status: u.ativo !== false ? 'Ativo' : 'Inativo',
+      _raw: u
+    }));
+  },
+
+  getProfessoresAPI: async () => {
+    const users = await api.getUsuariosAPI('PROFESSOR');
+    return users.map(u => ({
+      id: u.id || u.matricula,
+      name: u.nome || u.name || '',
+      department: u.departamento || 'Geral',
+      email: u.email || '',
+      _raw: u
+    }));
+  },
+
+  createUsuarioAPI: async (payload) => {
+    const { data } = await httpAuth.post('/usuarios', payload);
+    return data;
   }
 };
 
+export { httpAuth };
 export default api;

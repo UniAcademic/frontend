@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import api from '../../services/api';
+import api from '@/services/api';
 
 const alunoCreateSchema = z.object({
   name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),

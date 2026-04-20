@@ -7,17 +7,11 @@ import AdminEntityForm from '@/pages/admin/EntityForm';
 import AlunoForm from '@/pages/admin/AlunoForm';
 import ProfessorForm from '@/pages/admin/ProfessorForm';
 
-// Admin-exclusive pages (system management)
-import Usuarios from '@/pages/administrador/Usuarios';
-import Roles from '@/pages/administrador/Roles';
-import Acessos from '@/pages/administrador/Acessos';
-
-const AdminRoutes = () => {
+const CoordenadorRoutes = () => {
   return (
     <Routes>
       <Route element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
-        {/* Academic pages (shared with coordenador) */}
         <Route path="alunos" element={<AdminEntityList entityType="alunos" />} />
         <Route path="alunos/novo" element={<AlunoForm />} />
         <Route path="alunos/editar/:id" element={<AlunoForm />} />
@@ -30,13 +24,9 @@ const AdminRoutes = () => {
         <Route path="disciplinas" element={<AdminEntityList entityType="disciplinas" />} />
         <Route path="disciplinas/novo" element={<AdminEntityForm entityType="disciplinas" mode="create" />} />
         <Route path="disciplinas/editar/:id" element={<AdminEntityForm entityType="disciplinas" mode="edit" />} />
-        {/* Admin-exclusive pages (system management) */}
-        <Route path="usuarios" element={<Usuarios />} />
-        <Route path="roles" element={<Roles />} />
-        <Route path="acessos" element={<Acessos />} />
       </Route>
     </Routes>
   );
 };
 
-export default AdminRoutes;
+export default CoordenadorRoutes;

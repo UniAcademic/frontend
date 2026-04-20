@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Logo from './Logo';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = ({ 
   user: initialUser, 
@@ -110,22 +110,14 @@ const Header = ({
                   <p className="text-[11px] font-bold text-white truncate">{user.name}</p>
                </div>
                
-               <Link
-                 to="/student/perfil"
-                 onClick={() => setIsMenuOpen(false)}
-                 className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:text-white hover:bg-slate-800/50 transition-colors uppercase tracking-widest"
-               >
+               <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:text-white hover:bg-slate-800/50 transition-colors uppercase tracking-widest">
                   <span className="material-symbols-outlined text-lg">person</span>
                   Meu Perfil
-               </Link>
-               <Link
-                 to="/student/configuracoes"
-                 onClick={() => setIsMenuOpen(false)}
-                 className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:text-white hover:bg-slate-800/50 transition-colors uppercase tracking-widest"
-               >
+               </button>
+               <button className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-slate-300 hover:text-white hover:bg-slate-800/50 transition-colors uppercase tracking-widest">
                   <span className="material-symbols-outlined text-lg">settings</span>
                   Configurações
-               </Link>
+               </button>
                
                <div className="h-px bg-[#1E293B] my-1"></div>
                

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import api from '../../services/api';
+import api from '@/services/api';
 
 const AdminEntityList = () => {
   const location = useLocation();
@@ -14,7 +14,7 @@ const AdminEntityList = () => {
   let entityType = '';
   let columns = [];
 
-  if (path.includes('/admin/alunos')) {
+  if (path.includes('/alunos')) {
     title = 'ALUNOS';
     entityType = 'alunos';
     columns = [
@@ -22,14 +22,14 @@ const AdminEntityList = () => {
       { key: 'ra', label: 'RA' },
       { key: 'status', label: 'SITUAÇÃO' }
     ];
-  } else if (path.includes('/admin/professores')) {
+  } else if (path.includes('/professores')) {
     title = 'PROFESSORES';
     entityType = 'professores';
     columns = [
       { key: 'name', label: 'NOME COMPLETO' },
       { key: 'department', label: 'DEPARTAMENTO' }
     ];
-  } else if (path.includes('/admin/turmas')) {
+  } else if (path.includes('/turmas')) {
     title = 'TURMAS';
     entityType = 'turmas';
     columns = [
@@ -38,7 +38,7 @@ const AdminEntityList = () => {
       { key: 'semester', label: 'SEMESTRE' },
       { key: 'location', label: 'LOCAL' }
     ];
-  } else if (path.includes('/admin/disciplinas')) {
+  } else if (path.includes('/disciplinas')) {
     title = 'DISCIPLINAS';
     entityType = 'disciplinas';
     columns = [
@@ -53,8 +53,8 @@ const AdminEntityList = () => {
       setLoading(true);
       try {
         let data = [];
-        if (entityType === 'alunos') data = await api.getAlunos();
-        else if (entityType === 'professores') data = await api.getProfessores();
+        if (entityType === 'alunos') data = await api.getAlunosAPI();
+        else if (entityType === 'professores') data = await api.getProfessoresAPI();
         else if (entityType === 'turmas') data = await api.getTurmasAdmin();
         else if (entityType === 'disciplinas') data = await api.getDisciplinasAdmin();
         setEntities(data);

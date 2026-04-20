@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '../../contexts/AuthContext';
-import Logo from '../../components/Logo';
+import { useAuth } from '@/contexts/AuthContext';
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'E-mail é obrigatório').email('E-mail inválido'),
+  identifier: z.string().min(1, 'Matrícula é obrigatória'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres')
 });
 
@@ -22,17 +21,17 @@ const Login = () => {
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' }
+    defaultValues: { identifier: '', password: '' }
   });
 
   const onSubmit = async (formData) => {
     setServerError('');
     try {
-      const user = await login(formData.email, formData.password);
-      const redirectMap = { admin: '/admin', professor: '/professor', student: '/student' };
+      const user = await login(formData.identifier, formData.password);
+      const redirectMap = { admin: '/admin', coordenador: '/coordenador', professor: '/professor', student: '/student' };
       navigate(redirectMap[user.role] || '/login');
     } catch (error) {
-      setServerError(error.message || 'Credenciais inválidas. Verifique seu e-mail e senha.');
+      setServerError(error.message || 'Credenciais inválidas. Verifique sua matrícula e senha.');
     }
   };
 
@@ -93,16 +92,16 @@ const Login = () => {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                E-MAIL INSTITUCIONAL
+                MATRÍCULA
               </label>
               <input
-                type="email"
-                {...register('email')}
-                placeholder="seu.email@uniacademic.com"
-                className={`w-full px-4 py-3.5 bg-white dark:bg-[#0B0F19] border ${errors.email ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-lg text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent outline-none transition-all`}
+                type="text"
+                {...register('identifier')}
+                placeholder="Ex.: 01622944"
+                className={`w-full px-4 py-3.5 bg-white dark:bg-[#0B0F19] border ${errors.identifier ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-lg text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#F59E0B] focus:border-transparent outline-none transition-all`}
               />
-              {errors.email && (
-                <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.email.message}</p>
+              {errors.identifier && (
+                <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.identifier.message}</p>
               )}
             </div>
 
@@ -142,10 +141,11 @@ const Login = () => {
           </p>
 
           <div className="mt-6 p-4 bg-slate-100 dark:bg-slate-800/30 rounded-lg border border-slate-200 dark:border-slate-800">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Contas de teste:</p>
-            <p className="text-[10px] text-slate-500 font-mono">Admin: admin@uniacademic.com / admin123</p>
-            <p className="text-[10px] text-slate-500 font-mono">Prof: sarah@uniacademic.com / prof123</p>
-            <p className="text-[10px] text-slate-500 font-mono">Aluno: alice@uniacademic.com / aluno123</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Credenciais de demonstração:</p>
+            <p className="text-[10px] text-slate-500 font-mono">Aluno: 00100009 / 2201ads91</p>
+            <p className="text-[10px] text-slate-500 font-mono">Professor: 00100010 / 2201ads91</p>
+            <p className="text-[10px] text-slate-500 font-mono">Admin: 00100011 / 2201ads91</p>
+            <p className="text-[10px] text-slate-500 font-mono">Coordenador: 00100027 / 2201ads91</p>
           </div>
         </div>
       </div>

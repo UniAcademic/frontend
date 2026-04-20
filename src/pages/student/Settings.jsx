@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSettings } from '../../contexts/SettingsContext';
+import { useSettings } from '@/contexts/SettingsContext';
 
 // ─── Labels bilíngues inline (não dependem do contexto ainda carregado) ──────
 const UI = {
