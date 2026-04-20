@@ -207,7 +207,7 @@ const Usuarios = () => {
         </div>
       )}
 
-      {/* Search by matricula */}
+      {/* .Search by matricula */}
       <div className="bg-white dark:bg-[#020617] p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center gap-4">
         <div className="relative flex-1">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
