@@ -1,11 +1,11 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import StudentLayout from '../layouts/StudentLayout';
-import StudentDashboard from '../pages/student/Dashboard';
-import StudentDisciplina from '../pages/student/Disciplina';
-import StudentBoletim from '../pages/student/Boletim';
-import StudentHorario from '../pages/student/Horario';
-import StudentEmenta from '../pages/student/Ementa';
+import StudentLayout from '@layouts/StudentLayout';
+import StudentDashboard from '@pages/student/Dashboard';
+import StudentDisciplina from '@pages/student/Disciplina';
+import StudentBoletim from '@pages/student/Boletim';
+import StudentHorario from '@pages/student/Horario';
+import StudentEmenta from '@pages/student/Ementa';
 
 const StudentRoutes = () => {
   return (

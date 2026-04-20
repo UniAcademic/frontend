@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import api from '../../services/api';
+import api from '@services/api';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {

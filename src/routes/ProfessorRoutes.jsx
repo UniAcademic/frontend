@@ -1,13 +1,13 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import ProfessorLayout from '../layouts/ProfessorLayout';
-import ProfessorDashboard from '../pages/professor/Dashboard';
-import ProfessorCurso from '../pages/professor/Curso';
-import ProfessorTurma from '../pages/professor/Turma';
-import ProfessorDisciplinas from '../pages/professor/Disciplinas';
-import ProfessorFrequencia from '../pages/professor/Frequencia';
-import ProfessorNotas from '../pages/professor/Notas';
-import ProfessorHorario from '../pages/professor/Horario';
+import ProfessorLayout from '@layouts/ProfessorLayout';
+import ProfessorDashboard from '@pages/professor/Dashboard';
+import ProfessorCurso from '@pages/professor/Curso';
+import ProfessorTurma from '@pages/professor/Turma';
+import ProfessorDisciplinas from '@pages/professor/Disciplinas';
+import ProfessorFrequencia from '@pages/professor/Frequencia';
+import ProfessorNotas from '@pages/professor/Notas';
+import ProfessorHorario from '@pages/professor/Horario';
 
 const ProfessorRoutes = () => {
   return (

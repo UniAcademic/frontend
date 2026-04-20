@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import Header from '../components/Header';
-import { useAuth } from '../contexts/AuthContext';
+import Header from '@components/Header';
+import { useAuth } from '@contexts/AuthContext';
 
 const ProfessorLayout = () => {
   const { user } = useAuth();

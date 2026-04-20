@@ -1,11 +1,74 @@
 import axios from 'axios';
 
 const API_URL = 'http://localhost:3001';
+const USER_API_URL = '/api/ms-usuario';
 
+// Mock HTTP client (JSON Server) - temporary until microservices are ready
 const http = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' }
 });
+
+// Authenticated HTTP client for real microservices
+// Automatically picks up the Bearer token from the global axios defaults
+const httpAuth = axios.create({
+  baseURL: USER_API_URL,
+  headers: { 'Content-Type': 'application/json' }
+});
+
+// Interceptor: attach Bearer token to all httpAuth requests
+httpAuth.interceptors.request.use((config) => {
+  const token = localStorage.getItem('uniacademic_access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Interceptor: handle 401 (expired token) globally
+httpAuth.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      localStorage.removeItem('uniacademic_access_token');
+      localStorage.removeItem('uniacademic_refresh_token');
+      localStorage.removeItem('uniacademic_user');
+      delete axios.defaults.headers.common.Authorization;
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+const ROLE_FALLBACK_MOCK_USER_ID = {
+  admin: 1,
+  professor: 2,
+  student: 4
+};
+
+const resolveMockContext = (userRef, fallbackRole) => {
+  if (userRef && typeof userRef === 'object') {
+    return {
+      rawId: Number(userRef.id),
+      mockUserId: Number(userRef.mockUserId),
+      role: userRef.role || fallbackRole || null
+    };
+  }
+
+  return {
+    rawId: Number(userRef),
+    mockUserId: Number(userRef),
+    role: fallbackRole || null
+  };
+};
+
+const pickEffectiveMockUserId = ({ mockUserId, rawId, role }) => {
+  if (Number.isFinite(mockUserId) && mockUserId > 0) return mockUserId;
+  if (Number.isFinite(rawId) && rawId > 0) return rawId;
+
+  const roleFallback = ROLE_FALLBACK_MOCK_USER_ID[role];
+  return Number.isFinite(roleFallback) ? roleFallback : null;
+};
 
 const api = {
   // ==================== DASHBOARD METRICS ====================
@@ -101,10 +164,10 @@ const api = {
   },
 
   // ==================== PROFESSOR ====================
-  getProfessorDashboard: async (userId) => {
+  getProfessorDashboard: async (userRef) => {
     const { data: professores } = await http.get('/professores');
-    // Prioritize userId match over id match to avoid wrong professor
-    const uid = Number(userId);
+    const context = resolveMockContext(userRef, 'professor');
+    const uid = pickEffectiveMockUserId(context);
     const prof = professores.find(p => Number(p.userId) === uid) || professores.find(p => Number(p.id) === uid);
     if (!prof) return null;
 
@@ -112,10 +175,10 @@ const api = {
     return { professor: prof, disciplinas };
   },
 
-  getProfessorDisciplinas: async (userId) => {
+  getProfessorDisciplinas: async (userRef) => {
     const { data: professores } = await http.get('/professores');
-    // Prioritize userId match over id match
-    const uid = Number(userId);
+    const context = resolveMockContext(userRef, 'professor');
+    const uid = pickEffectiveMockUserId(context);
     const prof = professores.find(p => Number(p.userId) === uid) || professores.find(p => Number(p.id) === uid);
     if (!prof) return [];
 
@@ -175,10 +238,10 @@ const api = {
   },
 
   // ==================== STUDENT ====================
-  getStudentDashboard: async (userId) => {
+  getStudentDashboard: async (userRef) => {
     const { data: alunos } = await http.get('/alunos');
-    // Prioritize userId match over id match
-    const uid = Number(userId);
+    const context = resolveMockContext(userRef, 'student');
+    const uid = pickEffectiveMockUserId(context);
     const aluno = alunos.find(a => Number(a.userId) === uid) || alunos.find(a => Number(a.id) === uid);
     if (!aluno) return null;
 
@@ -259,7 +322,84 @@ const api = {
   getSchedule: async () => {
     const { data } = await http.get('/schedule');
     return data;
+  },
+
+  // Notas (Grades)
+  getNotas: async (params = {}) => {
+    const { data } = await http.get('/notas', { params });
+    return data;
+  },
+
+  // ==================== REAL MICROSERVICE APIs ====================
+  // These use httpAuth (Bearer token automatically attached)
+
+  // User microservice
+  getUserProfile: async (matricula) => {
+    const { data } = await httpAuth.get(`/usuarios/matricula/${matricula}`);
+    return data;
+  },
+
+  getUserById: async (id) => {
+    const { data } = await httpAuth.get(`/usuarios/${id}`);
+    return data;
+  },
+
+  // ==================== REAL API: USUARIOS (ms-usuario) ====================
+  // Fetch all users with pagination, then filter by tipo_usuario
+  getUsuariosAPI: async (tipoFilter = null) => {
+    const allUsers = [];
+    let page = 0;
+    let totalPages = 1;
+
+    while (page < totalPages) {
+      const { data } = await httpAuth.get(`/usuarios?page=${page}&size=20&sort=id`);
+      if (data.content) {
+        allUsers.push(...data.content);
+        totalPages = data.totalPages || 1;
+      } else if (Array.isArray(data)) {
+        allUsers.push(...data);
+        break;
+      }
+      page++;
+    }
+
+    if (tipoFilter) {
+      return allUsers.filter(u => {
+        const tipo = (u.tipo_usuario || '').toUpperCase();
+        return tipo === tipoFilter.toUpperCase();
+      });
+    }
+    return allUsers;
+  },
+
+  getAlunosAPI: async () => {
+    const users = await api.getUsuariosAPI('ALUNO');
+    return users.map(u => ({
+      id: u.id || u.matricula,
+      name: u.nome || u.name || '',
+      ra: u.matricula || '',
+      email: u.email || '',
+      status: u.ativo !== false ? 'Ativo' : 'Inativo',
+      _raw: u
+    }));
+  },
+
+  getProfessoresAPI: async () => {
+    const users = await api.getUsuariosAPI('PROFESSOR');
+    return users.map(u => ({
+      id: u.id || u.matricula,
+      name: u.nome || u.name || '',
+      department: u.departamento || 'Geral',
+      email: u.email || '',
+      _raw: u
+    }));
+  },
+
+  createUsuarioAPI: async (payload) => {
+    const { data } = await httpAuth.post('/usuarios', payload);
+    return data;
   }
 };
 
+export { httpAuth };
 export default api;

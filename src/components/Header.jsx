@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import Logo from './Logo';
-import { useAuth } from '../contexts/AuthContext';
+import Logo from '@components/Logo';
+import { useAuth } from '@contexts/AuthContext';
 
 const Header = ({ 
   user: initialUser, 

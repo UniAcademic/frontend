@@ -2,17 +2,17 @@
   "users": [
     {
       "id": 1,
-      "name": "Admin Master",
-      "email": "admin@uniacademic.com",
-      "password": "admin123",
+      "name": "Allan Jesus",
+      "email": "allanreymond2@gmail.com",
+      "matricula": "00100011",
       "role": "admin",
       "avatar": "https://i.pravatar.cc/150?img=68"
     },
     {
       "id": 2,
-      "name": "Sarah Jenkins",
-      "email": "sarah@uniacademic.com",
-      "password": "prof123",
+      "name": "Allan Reymond",
+      "email": "allanreymond@gmail.com",
+      "matricula": "00100010",
       "role": "professor",
       "avatar": "https://i.pravatar.cc/150?img=5",
       "department": "Ciência da Computação"
@@ -28,12 +28,12 @@
     },
     {
       "id": 4,
-      "name": "Alice Silva",
-      "email": "alice@uniacademic.com",
-      "password": "aluno123",
+      "name": "Allan Reymond da Silva",
+      "email": "allanreyemi@gmail.com",
+      "matricula": "00100009",
       "role": "student",
       "avatar": "https://i.pravatar.cc/150?img=1",
-      "ra": "202310045",
+      "ra": "00100009",
       "curso": "Ciência da Computação",
       "status": "Ativo"
     },
@@ -53,10 +53,10 @@
     {
       "id": 1,
       "userId": 2,
-      "name": "Sarah Jenkins",
+      "name": "Allan Reymond",
       "department": "Ciência da Computação",
       "avatar": "https://i.pravatar.cc/150?img=5",
-      "email": "sarah@uniacademic.com"
+      "email": "allanreymond@gmail.com"
     },
     {
       "id": 2,
@@ -78,13 +78,13 @@
     {
       "id": 1,
       "userId": 4,
-      "name": "Alice Silva",
-      "ra": "202310045",
+      "name": "Allan Reymond da Silva",
+      "ra": "00100009",
       "avatar": "https://i.pravatar.cc/150?img=1",
       "status": "Ativo",
       "cursoId": 1,
       "curso": "Ciência da Computação",
-      "email": "alice@uniacademic.com",
+      "email": "allanreyemi@gmail.com",
       "semestreEntrada": "2023.1"
     },
     {

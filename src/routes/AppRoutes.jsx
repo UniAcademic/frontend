@@ -2,15 +2,16 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Route Guard
-import ProtectedRoute from './ProtectedRoute';
+import ProtectedRoute from '@routes/ProtectedRoute';
 
 // Entity Routes
-import AdminRoutes from './AdminRoutes';
-import ProfessorRoutes from './ProfessorRoutes';
-import StudentRoutes from './StudentRoutes';
+import AdminRoutes from '@routes/AdminRoutes';
+import CoordenadorRoutes from '@routes/CoordenadorRoutes';
+import ProfessorRoutes from '@routes/ProfessorRoutes';
+import StudentRoutes from '@routes/StudentRoutes';
 
 // Auth Pages
-import Login from '../pages/auth/Login';
+import Login from '@pages/auth/Login';
 
 const AppRoutes = () => {
   return (
@@ -20,9 +21,14 @@ const AppRoutes = () => {
       <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route path="/forgot-password" element={<Navigate to="/login" replace />} />
 
-      {/* Admin Routes */}
+      {/* Admin Routes (system-level: users, roles, acessos + academic) */}
       <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
         <Route path="/admin/*" element={<AdminRoutes />} />
+      </Route>
+
+      {/* Coordenador Routes (academic: alunos, professores, turmas, disciplinas) */}
+      <Route element={<ProtectedRoute allowedRoles={['coordenador']} />}>
+        <Route path="/coordenador/*" element={<CoordenadorRoutes />} />
       </Route>
 
       {/* Professor Routes */}
