@@ -10,12 +10,12 @@ const Roles = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ role: '', descricao: '' });
+  const [formData, setFormData] = useState({ role: '' });
   const [saving, setSaving] = useState(false);
   const [showLinkForm, setShowLinkForm] = useState(null);
   const [acessoInput, setAcessoInput] = useState('');
   const [editingRole, setEditingRole] = useState(null);
-  const [editForm, setEditForm] = useState({ role: '', descricao: '' });
+  const [editForm, setEditForm] = useState({ role: ''});
   const [originalForm, setOriginalForm] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
 
@@ -54,7 +54,7 @@ const Roles = () => {
         throw new Error(err.mensagem || `Erro ${res.status}`);
       }
       setShowForm(false);
-      setFormData({ role: '', descricao: '' });
+      setFormData({ role: `${formData.role}`, descricao: `${formData.descricao}` });
       fetchRoles();
     } catch (err) {
       alert(err.message);
@@ -157,7 +157,7 @@ const Roles = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input type="text" required placeholder="Nome da Role (ex: COORDENADOR)" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
               className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#F59E0B]" />
-            <input type="text" required placeholder="Descrição" value={formData.descricao} onChange={e => setFormData({...formData, descricao: e.target.value})}
+            <input type="text" required placeholder="Descrição" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
               className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#F59E0B]" />
           </div>
           <div className="flex gap-3">

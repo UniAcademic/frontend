@@ -121,12 +121,41 @@ const Usuarios = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    
+    // Validação dos campos obrigatórios
+    if (!formData.nome?.trim()) {
+      alert('Nome é obrigatório');
+      return;
+    }
+    if (!formData.email?.trim()) {
+      alert('Email é obrigatório');
+      return;
+    }
+    if (!formData.senha?.trim()) {
+      alert('Senha é obrigatória');
+      return;
+    }
+    if (!formData.tipo_usuario?.trim()) {
+      alert('Tipo de usuário é obrigatório');
+      return;
+    }
+    
     setSaving(true);
     try {
+      // Preparar o payload removendo campos vazios
+      const payload = {
+        nome: formData.nome,
+        email: formData.email,
+        senha: formData.senha,
+        tipo_usuario: formData.tipo_usuario,
+        ...(formData.celular?.trim() && { celular: formData.celular }),
+        ...(formData.roles?.[0]?.role?.trim() && { roles: formData.roles })
+      };
+      
       const res = await fetch(`${USER_API_URL}/usuarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.accessToken}` },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -135,6 +164,7 @@ const Usuarios = () => {
       setShowForm(false);
       setFormData({ nome: '', email: '', celular: '', senha: '', tipo_usuario: '', roles: [{ role: '' }] });
       fetchUsuarios(page);
+      alert('Usuário criado com sucesso!');
     } catch (err) {
       alert(err.message);
     } finally {
@@ -169,24 +199,26 @@ const Usuarios = () => {
         <form onSubmit={handleSave} className="bg-white dark:bg-[#020617] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
           <h2 className="text-sm font-black uppercase tracking-widest text-slate-500">Novo Usuário</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input type="text" required placeholder="Nome" value={formData.nome} onChange={e => setFormData({...formData, nome: e.target.value})}
+            <input type="text" required placeholder="Nome" value={formData.nome} onChange={e => setFormData({ ...formData, nome: e.target.value })}
               className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#F59E0B]" />
-            <input type="email" required placeholder="Email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})}
+            <input type="email" required placeholder="Email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })}
               className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#F59E0B]" />
-            <input type="text" placeholder="Celular" value={formData.celular} onChange={e => setFormData({...formData, celular: e.target.value})}
+            <input type="text" placeholder="Celular" value={formData.celular} onChange={e => setFormData({ ...formData, celular: e.target.value })}
               className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#F59E0B]" />
-            <input type="password" required placeholder="Senha" value={formData.senha} onChange={e => setFormData({...formData, senha: e.target.value})}
+            <input type="password" required placeholder="Senha" value={formData.senha} onChange={e => setFormData({ ...formData, senha: e.target.value })}
               className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#F59E0B]" />
-            <select required value={formData.tipo_usuario} onChange={e => setFormData({...formData, tipo_usuario: e.target.value})}
+            <select placeholder="Tipo de Usuário" required value={formData.tipo_usuario  } onChange={e =>  setFormData({ 
+              ...formData, tipo_usuario: e.target.value, roles: [{ role: e.target.value }]
+            })  }
               className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#F59E0B]">
-              <option value="">Tipo de Usuário</option>
+              
               <option value="ALUNO">Aluno</option>
               <option value="PROFESSOR">Professor</option>
               <option value="COORDENADOR">Coordenador</option>
               <option value="ADMINISTRADOR">Administrador</option>
             </select>
-            <input type="text" placeholder="Role (ex: ALUNO)" value={formData.roles[0]?.role || ''} onChange={e => setFormData({...formData, roles: [{ role: e.target.value }]})}
-              className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#F59E0B]" />
+
+
           </div>
           <div className="flex gap-3">
             <button type="submit" disabled={saving}
@@ -232,9 +264,9 @@ const Usuarios = () => {
           </div>
           {editingUser === searchResult.id ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div><label className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Nome</label><input type="text" value={editForm.nome} onChange={e => setEditForm({...editForm, nome: e.target.value})} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" /></div>
-              <div><label className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Email</label><input type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" /></div>
-              <div><label className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Celular</label><input type="text" value={editForm.celular} onChange={e => setEditForm({...editForm, celular: e.target.value})} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" /></div>
+              <div><label className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Nome</label><input type="text" value={editForm.nome} onChange={e => setEditForm({ ...editForm, nome: e.target.value })} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" /></div>
+              <div><label className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Email</label><input type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" /></div>
+              <div><label className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Celular</label><input type="text" value={editForm.celular} onChange={e => setEditForm({ ...editForm, celular: e.target.value })} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" /></div>
               <div className="md:col-span-3 flex gap-3">
                 <button onClick={() => handleUpdate(searchResult.id)} disabled={editSaving} className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest py-2 px-5 rounded-lg disabled:opacity-50">{editSaving ? 'Salvando...' : 'Salvar'}</button>
                 <button onClick={cancelEdit} className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest py-2 px-5 rounded-lg">Cancelar</button>
@@ -273,10 +305,9 @@ const Usuarios = () => {
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">MATRÍCULA</th>
                   <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">NOME</th>
                   <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">EMAIL</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">TIPO</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">ROLES</th>
+                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Celular</th>
                   <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">STATUS</th>
-                  <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-right">AÇÕES</th>
+                  <th className="px-2 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-left ">AÇÕES</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -285,26 +316,26 @@ const Usuarios = () => {
                     <td className="px-8 py-5"><span className="text-[10px] font-black text-slate-400">{u.matricula}</span></td>
                     <td className="px-6 py-5">
                       {editingUser === u.id ? (
-                        <input type="text" value={editForm.nome} onChange={e => setEditForm({...editForm, nome: e.target.value})} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
+                        <input type="text" value={editForm.nome} onChange={e => setEditForm({ ...editForm, nome: e.target.value })} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
                       ) : (
                         <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">{u.nome}</span>
                       )}
                     </td>
                     <td className="px-6 py-5">
                       {editingUser === u.id ? (
-                        <input type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
+                        <input type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
                       ) : (
                         <span className="text-xs text-slate-500">{u.email}</span>
                       )}
                     </td>
                     <td className="px-6 py-5">
                       {editingUser === u.id ? (
-                        <input type="text" value={editForm.celular} onChange={e => setEditForm({...editForm, celular: e.target.value})} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
+                        <input type="text" value={editForm.celular} onChange={e => setEditForm({ ...editForm, celular: e.target.value })} className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
                       ) : (
                         <span className="text-xs text-slate-500">{u.celular || '-'}</span>
                       )}
                     </td>
-                    <td className="px-6 py-5"><span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded">{u.tipo_usuario}</span></td>
+                    
                     <td className="px-6 py-5">
                       <div className="flex flex-wrap gap-1">
                         {(u.roles || []).map((r, i) => (
@@ -314,11 +345,7 @@ const Usuarios = () => {
                         ))}
                       </div>
                     </td>
-                    <td className="px-6 py-5">
-                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${u.ativo !== false ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                        {u.ativo !== false ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </td>
+
                     <td className="px-6 py-5 text-right">
                       {editingUser === u.id ? (
                         <div className="flex items-center justify-end gap-2">
