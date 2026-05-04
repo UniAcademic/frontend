@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-
-const USER_API_URL = '/api/ms-usuario';
+import { API_ENDPOINTS } from '@/config/api.config';
+import { getAuthHeaders } from '@/lib/http';
 
 const Roles = () => {
   const { user } = useAuth();
@@ -10,24 +10,38 @@ const Roles = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ role: '' });
+  const [formData, setFormData] = useState({ role: '', descricao: '' });
   const [saving, setSaving] = useState(false);
-  const [showLinkForm, setShowLinkForm] = useState(null);
-  const [acessoInput, setAcessoInput] = useState('');
   const [editingRole, setEditingRole] = useState(null);
-  const [editForm, setEditForm] = useState({ role: ''});
+  const [editForm, setEditForm] = useState({ role: '', descricao: '' });
   const [originalForm, setOriginalForm] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
 
-  const getAuthHeaders = () => ({
-    headers: { Authorization: `Bearer ${user?.accessToken}` }
-  });
+  // View Modal state
+  const [viewingRole, setViewingRole] = useState(null);
+
+  // Link Acessos Modal state
+  const [linkModalRoleId, setLinkModalRoleId] = useState(null);
+  const [linkModalRoleName, setLinkModalRoleName] = useState('');
+  const [allAcessos, setAllAcessos] = useState([]);
+  const [selectedAcessos, setSelectedAcessos] = useState([]);
+  const [loadingAcessos, setLoadingAcessos] = useState(false);
+  const [linkSaving, setLinkSaving] = useState(false);
+  const [acessoSearch, setAcessoSearch] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+  };
+
+  const buildAuthHeaders = () => getAuthHeaders(user?.accessToken);
 
   const fetchRoles = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${USER_API_URL}/roles`, getAuthHeaders());
+      const res = await fetch(API_ENDPOINTS.ROLES.BASE, buildAuthHeaders());
       if (!res.ok) throw new Error(`Erro ${res.status}`);
       const data = await res.json();
       setRoles(data.content || data || []);
@@ -40,46 +54,113 @@ const Roles = () => {
 
   useEffect(() => { fetchRoles(); }, []);
 
+  // Fetch all acessos from API for the link modal
+  const fetchAllAcessos = async () => {
+    setLoadingAcessos(true);
+    try {
+      const res = await fetch(API_ENDPOINTS.ACESSOS.BASE, buildAuthHeaders());
+      if (!res.ok) throw new Error(`Erro ${res.status}`);
+      const data = await res.json();
+      setAllAcessos(data.content || data || []);
+    } catch (err) {
+      console.error('Erro ao buscar acessos:', err);
+      setAllAcessos([]);
+    } finally {
+      setLoadingAcessos(false);
+    }
+  };
+
+  // Open the link acessos modal for a specific role
+  const openLinkModal = (role) => {
+    // Pre-select acessos already linked to this role
+    const alreadyLinked = (role.acessos || role.acesso || []).map(a =>
+      typeof a === 'string' ? a : a.acesso || a.nome
+    );
+    setSelectedAcessos(alreadyLinked);
+    setLinkModalRoleId(role.id);
+    setLinkModalRoleName(role.role || role.nome);
+    setAcessoSearch('');
+    fetchAllAcessos();
+  };
+
+  const closeLinkModal = () => {
+    setLinkModalRoleId(null);
+    setLinkModalRoleName('');
+    setSelectedAcessos([]);
+    setAllAcessos([]);
+    setAcessoSearch('');
+  };
+
+  const toggleAcesso = (acessoName) => {
+    setSelectedAcessos(prev =>
+      prev.includes(acessoName)
+        ? prev.filter(a => a !== acessoName)
+        : [...prev, acessoName]
+    );
+  };
+
+  const handleLinkAcessos = async () => {
+    if (selectedAcessos.length === 0) {
+      showToast('Selecione pelo menos um acesso', 'error');
+      return;
+    }
+    setLinkSaving(true);
+    try {
+      const res = await fetch(API_ENDPOINTS.ROLES.ACESSOS(linkModalRoleName), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.accessToken}` },
+        body: JSON.stringify({ acessos: selectedAcessos })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.mensagem || `Erro ${res.status}`);
+      }
+      closeLinkModal();
+      fetchRoles();
+      showToast('Acessos vinculados com sucesso!');
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setLinkSaving(false);
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
+
+    if (!formData.role?.trim()) {
+      showToast('Nome da role é obrigatório', 'error');
+      return;
+    }
+    if (!formData.descricao?.trim()) {
+      showToast('Descrição é obrigatória', 'error');
+      return;
+    }
+
     setSaving(true);
     try {
-      const res = await fetch(`${USER_API_URL}/roles`, {
+      const payload = {
+        role: formData.role.trim(),
+        descricao: formData.descricao.trim(),
+      };
+
+      const res = await fetch(API_ENDPOINTS.ROLES.BASE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.accessToken}` },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.mensagem || `Erro ${res.status}`);
       }
       setShowForm(false);
-      setFormData({ role: `${formData.role}`, descricao: `${formData.descricao}` });
+      setFormData({ role: '', descricao: '' });
       fetchRoles();
+      showToast('Role criada com sucesso!');
     } catch (err) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleLinkAcesso = async (roleName) => {
-    if (!acessoInput.trim()) return;
-    try {
-      const res = await fetch(`${USER_API_URL}/roles/${roleName}/acessos`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.accessToken}` },
-        body: JSON.stringify({ acessos: [acessoInput.trim()] })
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.mensagem || `Erro ${res.status}`);
-      }
-      setAcessoInput('');
-      setShowLinkForm(null);
-      fetchRoles();
-    } catch (err) {
-      alert(err.message);
     }
   };
 
@@ -117,7 +198,7 @@ const Roles = () => {
     }
     setEditSaving(true);
     try {
-      const res = await fetch(`${USER_API_URL}/roles/${roleId}`, {
+      const res = await fetch(API_ENDPOINTS.ROLES.BY_ID(roleId), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.accessToken}` },
         body: JSON.stringify(changed)
@@ -128,15 +209,30 @@ const Roles = () => {
       }
       cancelEdit();
       fetchRoles();
+      showToast('Role atualizada com sucesso!');
     } catch (err) {
-      alert(err.message);
+      showToast(err.message, 'error');
     } finally {
       setEditSaving(false);
     }
   };
 
+  // Filter acessos in the link modal
+  const filteredAcessos = allAcessos.filter(a => {
+    const name = typeof a === 'string' ? a : a.acesso || a.nome || '';
+    return name.toLowerCase().includes(acessoSearch.toLowerCase());
+  });
+
   return (
-    <div className="p-8 flex flex-col gap-8">
+    <div className="p-8 flex flex-col gap-8 relative">
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed bottom-5 right-5 z-[100] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all ${toast.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
+          <span className="material-symbols-outlined">{toast.type === 'success' ? 'check_circle' : 'error'}</span>
+          <span className="font-bold text-sm">{toast.message}</span>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">GESTÃO DE ROLES</h1>
@@ -144,29 +240,177 @@ const Roles = () => {
             CONTROLE DE ACESSO • {filtered.length} REGISTROS
           </p>
         </div>
-        <button onClick={() => setShowForm(!showForm)}
+        <button
+          onClick={() => { setShowForm(!showForm); setEditingRole(null); }}
           className="bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[10px] font-black uppercase tracking-widest py-3 px-6 rounded-xl transition-all shadow-lg shadow-[#F59E0B]/10 flex items-center gap-2">
           <span className="material-symbols-outlined text-[18px]">add</span>
           NOVA ROLE
         </button>
       </div>
 
+      {/* Create Role Modal */}
       {showForm && (
-        <form onSubmit={handleSave} className="bg-white dark:bg-[#020617] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-          <h2 className="text-sm font-black uppercase tracking-widest text-slate-500">Nova Role</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input type="text" required placeholder="Nome da Role (ex: COORDENADOR)" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
-              className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#F59E0B]" />
-            <input type="text" required placeholder="Descrição" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}
-              className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-2.5 rounded-lg text-sm outline-none focus:ring-1 focus:ring-[#F59E0B]" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <form onSubmit={handleSave} className="bg-white dark:bg-[#020617] w-full max-w-xl p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-6 shadow-2xl relative">
+            <button type="button" onClick={() => setShowForm(false)} className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+
+            <div>
+              <h2 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-slate-100 mb-1">Nova Role</h2>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Preencha os dados para criar a role</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Nome da Role</label>
+                <input type="text" required placeholder="Ex: COORDENADOR" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#F59E0B]" />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Descrição</label>
+                <input type="text" required placeholder="Ex: Coordenador de curso" value={formData.descricao} onChange={e => setFormData({ ...formData, descricao: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#F59E0B]" />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800/50">
+              <button type="submit" disabled={saving}
+                className="flex-1 bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-[#F59E0B]/20">
+                {saving ? 'CRIANDO ROLE...' : 'CRIAR ROLE'}
+              </button>
+              <button type="button" onClick={() => setShowForm(false)}
+                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all">
+                CANCELAR
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Link Acessos Modal */}
+      {linkModalRoleId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#020617] w-full max-w-2xl p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl relative flex flex-col max-h-[85vh]">
+            <button type="button" onClick={closeLinkModal} className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+
+            <div className="mb-6">
+              <h2 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-slate-100 mb-1">Vincular Acessos</h2>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                Role: <span className="text-[#F59E0B]">{linkModalRoleName}</span> — Selecione os acessos para vincular
+              </p>
+            </div>
+
+            {/* Search inside modal */}
+            <div className="relative mb-4">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+              <input
+                type="text"
+                placeholder="Filtrar acessos..."
+                value={acessoSearch}
+                onChange={e => setAcessoSearch(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#F59E0B]"
+              />
+            </div>
+
+            {/* Selected count */}
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                {selectedAcessos.length} ACESSO{selectedAcessos.length !== 1 ? 'S' : ''} SELECIONADO{selectedAcessos.length !== 1 ? 'S' : ''}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedAcessos(filteredAcessos.map(a => typeof a === 'string' ? a : a.acesso || a.nome))}
+                  className="text-[9px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-700 transition-colors"
+                >
+                  Selecionar todos
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">•</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedAcessos([])}
+                  className="text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  Limpar
+                </button>
+              </div>
+            </div>
+
+            {/* Acessos list */}
+            <div className="flex-1 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 min-h-[200px] max-h-[400px]">
+              {loadingAcessos ? (
+                <div className="p-10 flex justify-center">
+                  <div className="w-6 h-6 border-3 border-[#F59E0B] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : filteredAcessos.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 uppercase text-[10px] font-black tracking-widest">
+                  {acessoSearch ? 'Nenhum acesso encontrado com esse filtro' : 'Nenhum acesso disponível'}
+                </div>
+              ) : (
+                filteredAcessos.map((a, idx) => {
+                  const acessoName = typeof a === 'string' ? a : a.acesso || a.nome;
+                  const acessoDesc = typeof a === 'string' ? '' : a.descricao || '';
+                  const isSelected = selectedAcessos.includes(acessoName);
+                  return (
+                    <label
+                      key={acessoName || idx}
+                      className={`flex items-center gap-4 px-5 py-3.5 cursor-pointer transition-colors ${
+                        isSelected
+                          ? 'bg-indigo-50 dark:bg-indigo-900/15'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/30'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleAcesso(acessoName)}
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-[#F59E0B] focus:ring-[#F59E0B] shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                          isSelected
+                            ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}>
+                          {acessoName}
+                        </span>
+                        {acessoDesc && (
+                          <p className="text-[10px] text-slate-400 mt-1 truncate">{acessoDesc}</p>
+                        )}
+                      </div>
+                      {isSelected && (
+                        <span className="material-symbols-outlined text-indigo-500 text-[18px] shrink-0">check_circle</span>
+                      )}
+                    </label>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer actions */}
+            <div className="flex gap-3 pt-5 mt-4 border-t border-slate-100 dark:border-slate-800/50">
+              <button
+                type="button"
+                onClick={handleLinkAcessos}
+                disabled={linkSaving || selectedAcessos.length === 0}
+                className="flex-1 bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-[#F59E0B]/20 flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">link</span>
+                {linkSaving ? 'VINCULANDO...' : `VINCULAR ${selectedAcessos.length} ACESSO${selectedAcessos.length !== 1 ? 'S' : ''}`}
+              </button>
+              <button
+                type="button"
+                onClick={closeLinkModal}
+                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all"
+              >
+                CANCELAR
+              </button>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <button type="submit" disabled={saving}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl disabled:opacity-50">{saving ? 'Salvando...' : 'Salvar'}</button>
-            <button type="button" onClick={() => setShowForm(false)}
-              className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest py-2.5 px-6 rounded-xl">Cancelar</button>
-          </div>
-        </form>
+        </div>
       )}
 
       {error && (
@@ -218,20 +462,15 @@ const Roles = () => {
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex flex-wrap gap-1">
-                        {(r.acessos || []).map((a, i) => (
+                        {(r.acessos || r.acesso || []).map((a, i) => (
                           <span key={i} className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 rounded">
                             {typeof a === 'string' ? a : a.acesso || a.nome}
                           </span>
                         ))}
+                        {(!(r.acessos || r.acesso) || (r.acessos || r.acesso).length === 0) && (
+                          <span className="text-[9px] text-slate-400 italic">Nenhum acesso</span>
+                        )}
                       </div>
-                      {showLinkForm === (r.role || r.nome) && (
-                        <div className="mt-2 flex gap-2">
-                          <input type="text" placeholder="Nome do acesso" value={acessoInput} onChange={e => setAcessoInput(e.target.value)}
-                            className="bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-sm px-3 py-1.5 rounded-lg outline-none text-slate-900 dark:text-white" />
-                          <button onClick={() => handleLinkAcesso(r.role || r.nome)}
-                            className="bg-indigo-600 text-white text-[9px] font-black px-3 py-1.5 rounded-lg">Vincular</button>
-                        </div>
-                      )}
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -248,12 +487,16 @@ const Roles = () => {
                           </>
                         ) : (
                           <>
+                            <button onClick={() => setViewingRole(r)}
+                              className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-emerald-500 flex items-center justify-center transition-colors" title="Visualizar Role">
+                              <span className="material-symbols-outlined text-[18px]">visibility</span>
+                            </button>
                             <button onClick={() => startEdit(r)}
                               className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 flex items-center justify-center transition-colors" title="Editar Role">
                               <span className="material-symbols-outlined text-[18px]">edit</span>
                             </button>
-                            <button onClick={() => setShowLinkForm(showLinkForm === (r.role || r.nome) ? null : (r.role || r.nome))}
-                              className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-indigo-500 flex items-center justify-center transition-colors" title="Vincular Acesso">
+                            <button onClick={() => openLinkModal(r)}
+                              className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-700 flex items-center justify-center transition-colors" title="Vincular Acessos">
                               <span className="material-symbols-outlined text-[18px]">link</span>
                             </button>
                           </>
@@ -270,6 +513,58 @@ const Roles = () => {
           <div className="p-10 text-center text-slate-400 uppercase text-[10px] font-black tracking-widest">Nenhuma role encontrada</div>
         )}
       </div>
+
+      {/* View Role Modal */}
+      {viewingRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#020617] w-full max-w-lg p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl relative">
+            <button type="button" onClick={() => setViewingRole(null)} className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+
+            <div className="mb-6">
+              <h2 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-slate-100 mb-1">Detalhes da Role</h2>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Informações completas</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">ID</label>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-300">#{viewingRole.id}</p>
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Nome da Role</label>
+                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase">{viewingRole.role || viewingRole.nome}</p>
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Descrição</label>
+                <p className="text-sm text-slate-600 dark:text-slate-400">{viewingRole.descricao || '—'}</p>
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Acessos Vinculados</label>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {(viewingRole.acessos || viewingRole.acesso || []).length > 0 ? (
+                    (viewingRole.acessos || viewingRole.acesso || []).map((a, i) => (
+                      <span key={i} className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
+                        {typeof a === 'string' ? a : a.acesso || a.nome}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">Nenhum acesso vinculado</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-5 mt-6 border-t border-slate-100 dark:border-slate-800/50">
+              <button type="button" onClick={() => setViewingRole(null)}
+                className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all">
+                FECHAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

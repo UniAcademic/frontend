@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 const ROLE_LABELS = {
@@ -10,19 +11,12 @@ const ROLE_LABELS = {
 
 const AdminHeader = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const basePath = user?.role === 'admin' ? '/admin' : `/${user?.role || 'coordenador'}`;
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0 sticky top-0 z-40">
-      <div className="flex-1 max-w-md">
-        <div className="relative">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-          <input 
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 border-gray-200 rounded-lg focus:ring-primary focus:border-primary text-sm" 
-            placeholder="Pesquisar por aluno, professor ou disciplina..." 
-            type="text"
-          />
-        </div>
-      </div>
+      <div className="flex-1" />
       
       <div className="flex items-center gap-4">
         <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors relative">
@@ -31,7 +25,10 @@ const AdminHeader = () => {
         </button>
         <div className="h-8 w-px bg-gray-200"></div>
         
-        <div className="flex items-center gap-3">
+        <button 
+          onClick={() => navigate(`${basePath}/perfil`)}
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+        >
           <div className="text-right hidden sm:block">
             <p className="text-sm font-semibold text-[#111318]">{user?.name || 'Usuário'}</p>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{ROLE_LABELS[user?.role] || 'Usuário'}</p>
@@ -40,7 +37,7 @@ const AdminHeader = () => {
             className="w-8 h-8 rounded-full border border-gray-200 bg-center bg-cover" 
             style={{ backgroundImage: `url("${user?.avatar || ''}")` }}>
           </div>
-        </div>
+        </button>
       </div>
     </header>
   );

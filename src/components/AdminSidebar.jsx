@@ -59,6 +59,23 @@ const AdminSidebar = () => {
           <span className="text-sm font-medium">Disciplinas</span>
         </NavLink>
 
+        {/* Usuários — visible for coordenador */}
+        {!isAdmin && (
+          <>
+            <div className="pt-4 pb-2 px-4">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-600">Sistema</span>
+            </div>
+            
+            <NavLink 
+              to={`${basePath}/usuarios`} 
+              className={({ isActive }) => `flex items-center gap-3 px-4 py-2 transition-colors text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-accent' : 'text-slate-400 hover:text-accent'}`}
+            >
+              <span className="material-symbols-outlined">manage_accounts</span>
+              <span className="text-sm font-medium">Usuários</span>
+            </NavLink>
+          </>
+        )}
+
         {/* Admin-exclusive menu items */}
         {isAdmin && (
           <>

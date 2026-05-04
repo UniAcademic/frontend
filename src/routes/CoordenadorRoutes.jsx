@@ -6,12 +6,15 @@ import AdminEntityList from '@/pages/admin/EntityList';
 import AdminEntityForm from '@/pages/admin/EntityForm';
 import AlunoForm from '@/pages/admin/AlunoForm';
 import ProfessorForm from '@/pages/admin/ProfessorForm';
+import CoordenadorUsuarios from '@/pages/coordenador/Usuarios';
+import Perfil from '@/pages/shared/Perfil';
 
 const CoordenadorRoutes = () => {
   return (
     <Routes>
       <Route element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
+        <Route path="usuarios" element={<CoordenadorUsuarios />} />
         <Route path="alunos" element={<AdminEntityList entityType="alunos" />} />
         <Route path="alunos/novo" element={<AlunoForm />} />
         <Route path="alunos/editar/:id" element={<AlunoForm />} />
@@ -24,6 +27,7 @@ const CoordenadorRoutes = () => {
         <Route path="disciplinas" element={<AdminEntityList entityType="disciplinas" />} />
         <Route path="disciplinas/novo" element={<AdminEntityForm entityType="disciplinas" mode="create" />} />
         <Route path="disciplinas/editar/:id" element={<AdminEntityForm entityType="disciplinas" mode="edit" />} />
+        <Route path="perfil" element={<Perfil />} />
       </Route>
     </Routes>
   );

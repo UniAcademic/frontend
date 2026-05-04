@@ -11,6 +11,7 @@ import ProfessorForm from '@/pages/admin/ProfessorForm';
 import Usuarios from '@/pages/administrador/Usuarios';
 import Roles from '@/pages/administrador/Roles';
 import Acessos from '@/pages/administrador/Acessos';
+import Perfil from '@/pages/shared/Perfil';
 
 const AdminRoutes = () => {
   return (
@@ -34,6 +35,7 @@ const AdminRoutes = () => {
         <Route path="usuarios" element={<Usuarios />} />
         <Route path="roles" element={<Roles />} />
         <Route path="acessos" element={<Acessos />} />
+        <Route path="perfil" element={<Perfil />} />
       </Route>
     </Routes>
   );

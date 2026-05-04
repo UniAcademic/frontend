@@ -2,13 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
-
-const loginSchema = z.object({
-  identifier: z.string().min(1, 'Matrícula é obrigatória'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres')
-});
+import { loginSchema } from '@/schemas/auth.schema';
+import { ROLE_HOME_ROUTES, ROUTES } from '@/config/routes.config';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -28,8 +24,7 @@ const Login = () => {
     setServerError('');
     try {
       const user = await login(formData.identifier, formData.password);
-      const redirectMap = { admin: '/admin', coordenador: '/coordenador', professor: '/professor', student: '/student' };
-      navigate(redirectMap[user.role] || '/login');
+      navigate(ROLE_HOME_ROUTES[user.role] || ROUTES.LOGIN);
     } catch (error) {
       setServerError(error.message || 'Credenciais inválidas. Verifique sua matrícula e senha.');
     }

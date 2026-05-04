@@ -2,22 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import api from '@/services/api';
-
-const professorCreateSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
-  email: z.string().email('E-mail inválido'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
-  department: z.string().min(2, 'Departamento é obrigatório')
-});
-
-const professorEditSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
-  email: z.string().email('E-mail inválido'),
-  password: z.string().optional().refine(val => !val || val.length >= 6, 'Senha deve ter no mínimo 6 caracteres'),
-  department: z.string().min(2, 'Departamento é obrigatório')
-});
+import { professorCreateSchema, professorEditSchema } from '@/schemas/professor.schema';
+import { generateNewAvatarUrl } from '@/config/external.config';
+import { ROUTES } from '@/config/routes.config';
 
 const ProfessorForm = () => {
   const { id } = useParams();
@@ -87,7 +75,7 @@ const ProfessorForm = () => {
         }
       } else {
         // Create user first (login credentials)
-        const avatar = `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`;
+        const avatar = generateNewAvatarUrl();
         const newUser = await api.createUser({
           name: formData.name,
           email: formData.email,
@@ -106,7 +94,7 @@ const ProfessorForm = () => {
           avatar
         });
       }
-      navigate('/admin/professores');
+      navigate(ROUTES.ADMIN.PROFESSORES);
     } catch (error) {
       console.error('Error saving professor:', error);
       setSubmitError('Erro ao salvar. Verifique se o e-mail já não está em uso.');
@@ -195,7 +183,7 @@ const ProfessorForm = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate('/admin/professores')}
+            onClick={() => navigate(ROUTES.ADMIN.PROFESSORES)}
             className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-black uppercase text-[11px] tracking-widest rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
           >
             Cancelar

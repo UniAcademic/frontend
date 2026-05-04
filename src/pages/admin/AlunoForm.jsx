@@ -2,26 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import api from '@/services/api';
-
-const alunoCreateSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
-  ra: z.string().min(6, 'RA deve ter no mínimo 6 caracteres').regex(/^\d+$/, 'RA deve conter apenas números'),
-  email: z.string().email('E-mail inválido'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
-  curso: z.string().min(1, 'Selecione um curso'),
-  status: z.enum(['Ativo', 'Inativo'], { required_error: 'Selecione um status' })
-});
-
-const alunoEditSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
-  ra: z.string().min(6, 'RA deve ter no mínimo 6 caracteres').regex(/^\d+$/, 'RA deve conter apenas números'),
-  email: z.string().email('E-mail inválido'),
-  password: z.string().optional().refine(val => !val || val.length >= 6, 'Senha deve ter no mínimo 6 caracteres'),
-  curso: z.string().min(1, 'Selecione um curso'),
-  status: z.enum(['Ativo', 'Inativo'], { required_error: 'Selecione um status' })
-});
+import { alunoCreateSchema, alunoEditSchema } from '@/schemas/aluno.schema';
+import { generateNewAvatarUrl } from '@/config/external.config';
+import { ROUTES } from '@/config/routes.config';
 
 const AlunoForm = () => {
   const { id } = useParams();
@@ -99,7 +83,7 @@ const AlunoForm = () => {
         }
       } else {
         // Create user first (login credentials)
-        const avatar = `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`;
+        const avatar = generateNewAvatarUrl();
         const newUser = await api.createUser({
           name: formData.name,
           email: formData.email,
@@ -123,7 +107,7 @@ const AlunoForm = () => {
           semestreEntrada: new Date().getFullYear() + '.1'
         });
       }
-      navigate('/admin/alunos');
+      navigate(ROUTES.ADMIN.ALUNOS);
     } catch (error) {
       console.error('Error saving aluno:', error);
       setSubmitError('Erro ao salvar. Verifique se o e-mail já não está em uso.');
@@ -238,7 +222,7 @@ const AlunoForm = () => {
           </button>
           <button
             type="button"
-            onClick={() => navigate('/admin/alunos')}
+            onClick={() => navigate(ROUTES.ADMIN.ALUNOS)}
             className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-black uppercase text-[11px] tracking-widest rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
           >
             Cancelar

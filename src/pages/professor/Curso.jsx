@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { getCourseStudentAvatar } from '@/config/external.config';
 
 const ProfessorCurso = () => {
   const { id } = useParams();
@@ -184,7 +185,7 @@ const ProfessorCurso = () => {
                   
                   <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
                     <div className="flex -space-x-2">
-                      <img className="w-8 h-8 rounded border-2 border-white dark:border-[#0B0F19] object-cover" src={`https://i.pravatar.cc/150?img=${11 + idx}`} alt="student" />
+                      <img className="w-8 h-8 rounded border-2 border-white dark:border-[#0B0F19] object-cover" src={getCourseStudentAvatar(idx)} alt="student" />
                       <div className="w-8 h-8 rounded border-2 border-white dark:border-[#0B0F19] bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold z-10">+38</div>
                     </div>
                     <button 

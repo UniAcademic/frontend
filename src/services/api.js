@@ -1,40 +1,10 @@
 import axios from 'axios';
 import db from '../../db.json';
-
-const USER_API_URL = '/api/ms-usuario';
+import httpAuth from '@/lib/http';
+import { MOCK_USER_ID_BY_ROLE } from '@/config/storage.config';
 
 // Simulação de delay de rede
 const delay = (ms = 500) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Authenticated HTTP client for real microservices
-const httpAuth = axios.create({
-  baseURL: USER_API_URL,
-  headers: { 'Content-Type': 'application/json' }
-});
-
-// Interceptor: attach Bearer token to all httpAuth requests
-httpAuth.interceptors.request.use((config) => {
-  const token = localStorage.getItem('uniacademic_access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Interceptor: handle 401 (expired token) globally
-httpAuth.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error?.response?.status === 401) {
-      localStorage.removeItem('uniacademic_access_token');
-      localStorage.removeItem('uniacademic_refresh_token');
-      localStorage.removeItem('uniacademic_user');
-      delete axios.defaults.headers.common.Authorization;
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
 
 const ROLE_FALLBACK_MOCK_USER_ID = {
   admin: 1,

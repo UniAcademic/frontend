@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { getInitialsAvatarUrl } from '@/config/external.config';
 
 const StudentProfile = () => {
   const [data, setData] = useState(null);
@@ -128,8 +129,7 @@ const StudentProfile = () => {
               <div className="relative">
                 <img
                   src={
-                    aluno.avatar ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(aluno.name)}&background=F59E0B&color=fff&size=128&bold=true`
+                    aluno.avatar || getInitialsAvatarUrl(aluno.name)
                   }
                   alt={aluno.name}
                   className="w-28 h-28 rounded-2xl border-4 border-white dark:border-[#020617] object-cover shadow-lg bg-amber-100"
