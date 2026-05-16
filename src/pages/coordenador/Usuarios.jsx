@@ -203,7 +203,7 @@ const CoordenadorUsuarios = () => {
             <span className="material-symbols-outlined text-[18px]">filter_list</span>
             FILTRAR
             {activeFiltersCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-blue-500 text-white w-5 h-5 flex items-center justify-center rounded-full text-[10px] shadow-lg">
+              <span className="absolute -top-2 -right-2 bg-[#F59E0B] text-[#020617] w-5 h-5 flex items-center justify-center rounded-full text-[10px] shadow-lg font-black">
                 {activeFiltersCount}
               </span>
             )}
@@ -225,7 +225,7 @@ const CoordenadorUsuarios = () => {
           {Object.entries(filters).map(([key, value]) => {
             if (!value.trim()) return null;
             return (
-              <div key={key} className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase">
+              <div key={key} className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase">
                 <span className="opacity-70">{key}:</span> {value}
                 <button onClick={() => {
                   const newFilters = { ...filters, [key]: '' };
@@ -274,7 +274,7 @@ const CoordenadorUsuarios = () => {
 
             <div className="flex gap-3 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800/50">
               <button type="submit"
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all shadow-lg shadow-blue-500/20">
+                className="flex-1 bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all shadow-lg shadow-[#F59E0B]/20">
                 APLICAR FILTROS
               </button>
               <button type="button" onClick={handleClearFilters}

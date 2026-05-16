@@ -23,7 +23,7 @@ const Login = () => {
   const onSubmit = async (formData) => {
     setServerError('');
     try {
-      const user = await login(formData.identifier, formData.password);
+      const user = await login(formData.identifier.trim(), formData.password.trim());
       navigate(ROLE_HOME_ROUTES[user.role] || ROUTES.LOGIN);
     } catch (error) {
       setServerError(error.message || 'Credenciais inválidas. Verifique sua matrícula e senha.');
