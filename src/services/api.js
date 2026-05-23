@@ -1,6 +1,7 @@
 import axios from 'axios';
 import db from '../../db.json';
 import httpAuth from '@/lib/http';
+import httpTipoUsuario from '@/lib/httpTipoUsuario';
 import { MOCK_USER_ID_BY_ROLE } from '@/config/storage.config';
 
 // Simulação de delay de rede
@@ -328,6 +329,163 @@ const api = {
 
   createUsuarioAPI: async (payload) => {
     const { data } = await httpAuth.post('/usuarios', payload);
+    return data;
+  },
+
+  // ==================== REAL API: MS-TIPO-USUARIO ====================
+  
+  // ALUNOS
+  getAlunosTipoAPI: async (page = 0, size = 10, filters = {}) => {
+    const params = new URLSearchParams({
+      page: String(page),
+      size: String(size),
+    });
+    if (filters.matricula) params.append('matricula', filters.matricula);
+    if (filters.email) params.append('email', filters.email);
+    if (filters.nome) params.append('nome', filters.nome);
+    if (filters.cpf) params.append('cpf', filters.cpf);
+    if (filters.sort) {
+      if (Array.isArray(filters.sort)) {
+        filters.sort.forEach(s => params.append('sort', s));
+      } else {
+        params.append('sort', filters.sort);
+      }
+    } else {
+      params.append('sort', 'usuarioId');
+    }
+    
+    const { data } = await httpTipoUsuario.get(`/alunos?${params.toString()}`);
+    return data;
+  },
+
+  getAlunoPorIdAPI: async (id) => {
+    const { data } = await httpTipoUsuario.get(`/alunos/${id}`);
+    return data;
+  },
+
+  getAlunoPorMatriculaAPI: async (matricula) => {
+    const { data } = await httpTipoUsuario.get(`/alunos/matricula/${matricula}`);
+    return data;
+  },
+
+  atualizarAlunoAPI: async (id, payload) => {
+    const { data } = await httpTipoUsuario.patch(`/alunos/${id}`, payload);
+    return data;
+  },
+
+  atualizarEnderecoAlunoAPI: async (id, payload) => {
+    const { data } = await httpTipoUsuario.patch(`/alunos/${id}/endereco`, payload);
+    return data;
+  },
+
+  // PROFESSORES
+  getProfessoresTipoAPI: async (page = 0, size = 10, filters = {}) => {
+    const params = new URLSearchParams({
+      page: String(page),
+      size: String(size),
+    });
+    if (filters.matricula) params.append('matricula', filters.matricula);
+    if (filters.email) params.append('email', filters.email);
+    if (filters.nome) params.append('nome', filters.nome);
+    if (filters.cpf) params.append('cpf', filters.cpf);
+    if (filters.sort) {
+      if (Array.isArray(filters.sort)) {
+        filters.sort.forEach(s => params.append('sort', s));
+      } else {
+        params.append('sort', filters.sort);
+      }
+    } else {
+      params.append('sort', 'usuarioId');
+    }
+    
+    const { data } = await httpTipoUsuario.get(`/professores?${params.toString()}`);
+    return data;
+  },
+
+  getProfessorPorIdAPI: async (id) => {
+    const { data } = await httpTipoUsuario.get(`/professores/${id}`);
+    return data;
+  },
+
+  getProfessorPorMatriculaAPI: async (matricula) => {
+    const { data } = await httpTipoUsuario.get(`/professores/matricula/${matricula}`);
+    return data;
+  },
+
+  atualizarProfessorAPI: async (id, payload) => {
+    const { data } = await httpTipoUsuario.patch(`/professores/${id}`, payload);
+    return data;
+  },
+
+  atualizarEnderecoProfessorAPI: async (id, payload) => {
+    const { data } = await httpTipoUsuario.patch(`/professores/${id}/endereco`, payload);
+    return data;
+  },
+
+  // COORDENADORES
+  getCoordenadoresTipoAPI: async (page = 0, size = 10, filters = {}) => {
+    const params = new URLSearchParams({
+      page: String(page),
+      size: String(size),
+    });
+    if (filters.matricula) params.append('matricula', filters.matricula);
+    if (filters.email) params.append('email', filters.email);
+    if (filters.nome) params.append('nome', filters.nome);
+    if (filters.cpf) params.append('cpf', filters.cpf);
+    if (filters.sort) {
+      if (Array.isArray(filters.sort)) {
+        filters.sort.forEach(s => params.append('sort', s));
+      } else {
+        params.append('sort', filters.sort);
+      }
+    } else {
+      params.append('sort', 'usuarioId');
+    }
+    
+    const { data } = await httpTipoUsuario.get(`/coordenadores?${params.toString()}`);
+    return data;
+  },
+
+  getCoordenadorPorIdAPI: async (id) => {
+    const { data } = await httpTipoUsuario.get(`/coordenadores/${id}`);
+    return data;
+  },
+
+  getCoordenadorPorMatriculaAPI: async (matricula) => {
+    const { data } = await httpTipoUsuario.get(`/coordenadores/matricula/${matricula}`);
+    return data;
+  },
+
+  atualizarCoordenadorAPI: async (id, payload) => {
+    const { data } = await httpTipoUsuario.patch(`/coordenadores/${id}`, payload);
+    return data;
+  },
+
+  atualizarEnderecoCoordenadorAPI: async (id, payload) => {
+    const { data } = await httpTipoUsuario.patch(`/coordenadores/${id}/endereco`, payload);
+    return data;
+  },
+
+  // DOCUMENTOS
+  baixarDocumentoAlunoAPI: async (id) => {
+    const { data } = await httpTipoUsuario.get(`/documentos/${id}/alunos`, {
+      responseType: 'blob'
+    });
+    return data;
+  },
+
+  enviarDocumentoAlunoAPI: async (id, arquivo, tipoMidia, tipoDocumento) => {
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    const { data } = await httpTipoUsuario.post(`/documentos/${id}/alunos`, formData, {
+      params: {
+        tipo_midia: tipoMidia,
+        tipo_documento: tipoDocumento
+      },
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     return data;
   }
 };

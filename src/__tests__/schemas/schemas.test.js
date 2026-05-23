@@ -13,6 +13,8 @@ import {
   acessoEditSchema,
   turmaSchema,
   disciplinaSchema,
+  coordenadorCreateSchema,
+  coordenadorEditSchema,
 } from '@/schemas';
 
 describe('loginSchema', () => {
@@ -218,5 +220,73 @@ describe('disciplinaSchema', () => {
       workload: '60h',
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('alunoCreateSchema extended fields', () => {
+  const validAluno = {
+    name: 'João Silva',
+    ra: '123456',
+    email: 'joao@email.com',
+    password: '123456',
+    curso: 'Ciência da Computação',
+    status: 'Ativo',
+  };
+
+  it('should validate a correct aluno with cpf, rg and celular', () => {
+    const result = alunoCreateSchema.safeParse({
+      ...validAluno,
+      cpf: '12345678901',
+      rg: '1234567',
+      celular: '11999998888',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject invalid CPF format', () => {
+    const result = alunoCreateSchema.safeParse({ ...validAluno, cpf: '123456789' });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject invalid RG format', () => {
+    const result = alunoCreateSchema.safeParse({ ...validAluno, rg: '12345' });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('coordenadorCreateSchema', () => {
+  const validCoordenador = {
+    name: 'Roberto Coordenador',
+    email: 'roberto@uni.com',
+    password: 'password123',
+    matricula: 'COORD001',
+    titulacao: 'MESTRE',
+  };
+
+  it('should validate a correct coordenador', () => {
+    const result = coordenadorCreateSchema.safeParse(validCoordenador);
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject invalid email', () => {
+    const result = coordenadorCreateSchema.safeParse({ ...validCoordenador, email: 'roberto' });
+    expect(result.success).toBe(false);
+  });
+
+  it('should reject invalid description of enum', () => {
+    const result = coordenadorCreateSchema.safeParse({ ...validCoordenador, titulacao: 'SUPER_HEROI' });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('coordenadorEditSchema', () => {
+  it('should accept missing password', () => {
+    const result = coordenadorEditSchema.safeParse({
+      name: 'Roberto',
+      email: 'roberto@uni.com',
+      matricula: 'COORD001',
+      titulacao: 'MESTRE',
+    });
+    expect(result.success).toBe(true);
   });
 });

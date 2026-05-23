@@ -29,6 +29,17 @@ export default defineConfig({
           });
         },
       },
+      '/api/ms-tipo-usuario': {
+        target: 'http://ec2-3-13-7-224.us-east-2.compute.amazonaws.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/ms-tipo-usuario/, '/ms-tipo-usuario/api/v1'),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.removeHeader('origin');
+            proxyReq.removeHeader('referer');
+          });
+        },
+      },
     },
   },
   test: {

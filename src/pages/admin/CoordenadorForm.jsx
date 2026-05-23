@@ -3,17 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import api from '@/services/api';
-import { professorCreateSchema, professorEditSchema } from '@/schemas/professor.schema';
+import { coordenadorEditSchema, coordenadorCreateSchema } from '@/schemas/coordenador.schema';
 import { generateNewAvatarUrl } from '@/config/external.config';
 import { ROUTES } from '@/config/routes.config';
 
-const ProfessorForm = () => {
+const CoordenadorForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
   const [loading, setLoading] = useState(isEdit);
   const [submitError, setSubmitError] = useState('');
-  const [professorData, setProfessorData] = useState(null);
+  const [coordenadorData, setCoordenadorData] = useState(null);
 
   const {
     register,
@@ -21,11 +21,11 @@ const ProfessorForm = () => {
     reset,
     formState: { errors, isSubmitting }
   } = useForm({
-    resolver: zodResolver(isEdit ? professorEditSchema : professorCreateSchema),
+    resolver: zodResolver(isEdit ? coordenadorEditSchema : coordenadorCreateSchema),
     defaultValues: {
-      name: '', email: '', password: '', department: 'Geral',
+      name: '', email: '', password: '', matricula: '',
       celular: '', cpf: '', rg: '', data_nascimento: '', ano_ingresso: new Date().getFullYear(),
-      titulacao: 'GRADUADO',
+      titulacao: 'MESTRE',
       cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', pais: 'Brasil'
     }
   });
@@ -34,38 +34,38 @@ const ProfessorForm = () => {
     if (isEdit) {
       const fetchData = async () => {
         try {
-          const professor = await api.getProfessorPorIdAPI(id);
-          if (professor) {
-            setProfessorData(professor);
+          const coordenador = await api.getCoordenadorPorIdAPI(id);
+          if (coordenador) {
+            setCoordenadorData(coordenador);
 
             let formattedDate = '';
-            if (professor.dataNascimento) {
-              formattedDate = professor.dataNascimento.split('T')[0];
+            if (coordenador.dataNascimento) {
+              formattedDate = coordenador.dataNascimento.split('T')[0];
             }
 
             reset({
-              name: professor.nome || professor.name || '',
-              email: professor.email || '',
+              name: coordenador.nome || coordenador.name || '',
+              email: coordenador.email || '',
               password: '',
-              department: professor.department || 'Geral',
-              celular: professor.celular || '',
-              cpf: professor.cpf || '',
-              rg: professor.rg || '',
+              matricula: coordenador.matricula || '',
+              celular: coordenador.celular || '',
+              cpf: coordenador.cpf || '',
+              rg: coordenador.rg || '',
               data_nascimento: formattedDate,
-              ano_ingresso: professor.anoAdmissao || new Date().getFullYear(),
-              titulacao: professor.titulacao || 'GRADUADO',
-              cep: professor.endereco?.cep || '',
-              logradouro: professor.endereco?.logradouro || '',
-              numero: professor.endereco?.numero || '',
-              complemento: professor.endereco?.complemento || '',
-              bairro: professor.endereco?.bairro || '',
-              cidade: professor.endereco?.cidade || '',
-              estado: professor.endereco?.estado || '',
-              pais: professor.endereco?.pais || 'Brasil',
+              ano_ingresso: coordenador.anoAdmissao || new Date().getFullYear(),
+              titulacao: coordenador.titulacao || 'MESTRE',
+              cep: coordenador.endereco?.cep || '',
+              logradouro: coordenador.endereco?.logradouro || '',
+              numero: coordenador.endereco?.numero || '',
+              complemento: coordenador.endereco?.complemento || '',
+              bairro: coordenador.endereco?.bairro || '',
+              cidade: coordenador.endereco?.cidade || '',
+              estado: coordenador.endereco?.estado || '',
+              pais: coordenador.endereco?.pais || 'Brasil',
             });
           }
         } catch (error) {
-          console.error('Error loading professor:', error);
+          console.error('Error loading coordinator data:', error);
         } finally {
           setLoading(false);
         }
@@ -79,7 +79,7 @@ const ProfessorForm = () => {
     try {
       if (isEdit) {
         // 1. Update personal & academic info using PATCH (ms-tipo-usuario)
-        const professorPayload = {
+        const coordenadorPayload = {
           nome: formData.name,
           email: formData.email,
           celular: formData.celular || null,
@@ -89,7 +89,7 @@ const ProfessorForm = () => {
           ano_ingresso: formData.ano_ingresso ? parseInt(formData.ano_ingresso) : null,
           titulacao: formData.titulacao || null
         };
-        await api.atualizarProfessorAPI(id, professorPayload);
+        await api.atualizarCoordenadorAPI(id, coordenadorPayload);
 
         // 2. Update address if populated
         if (formData.cep || formData.logradouro) {
@@ -103,11 +103,11 @@ const ProfessorForm = () => {
             estado: formData.estado || null,
             pais: formData.pais || 'Brasil'
           };
-          await api.atualizarEnderecoProfessorAPI(id, enderecoPayload);
+          await api.atualizarEnderecoCoordenadorAPI(id, enderecoPayload);
         }
 
         // 3. Fallback: Update user credentials if password/email changed on ms-usuario
-        if (professorData?.usuarioId && (formData.password || formData.email !== professorData.email)) {
+        if (coordenadorData?.usuarioId && (formData.password || formData.email !== coordenadorData.email)) {
           const userUpdate = {
             name: formData.name,
             email: formData.email,
@@ -115,7 +115,7 @@ const ProfessorForm = () => {
           if (formData.password) {
             userUpdate.password = formData.password;
           }
-          await api.updateUser(professorData.usuarioId, userUpdate);
+          await api.updateUser(coordenadorData.usuarioId, userUpdate);
         }
       } else {
         // Create user (using real ms-usuario creation endpoint)
@@ -124,24 +124,24 @@ const ProfessorForm = () => {
           nome: formData.name,
           email: formData.email,
           senha: formData.password,
-          tipo_usuario: 'PROFESSOR',
+          tipo_usuario: 'COORDENADOR',
           celular: formData.celular || '',
-          matricula: String(Math.floor(100000 + Math.random() * 900000))
+          matricula: formData.matricula
         });
 
-        // Simular/criar acadêmico local
+        // Simular/criar acadêmico local (fallback)
         await api.createProfessor({
           userId: newUser.id,
           name: formData.name,
           email: formData.email,
-          department: formData.department,
+          department: 'Coordenadoria',
           avatar
         });
       }
-      navigate(ROUTES.ADMIN.PROFESSORES);
+      navigate('/admin/coordenadores');
     } catch (error) {
-      console.error('Error saving professor:', error);
-      setSubmitError('Erro ao salvar. Verifique se o e-mail já não está em uso.');
+      console.error('Error saving coordinator:', error);
+      setSubmitError('Erro ao salvar. Verifique se o e-mail/matrícula já não está em uso.');
     }
   };
 
@@ -157,10 +157,10 @@ const ProfessorForm = () => {
     <div className="p-8 max-w-4xl mx-auto w-full flex flex-col gap-8">
       <div>
         <h1 className="text-3xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-          {isEdit ? 'Editar Professor' : 'Novo Professor'}
+          {isEdit ? 'Editar Coordenador' : 'Novo Coordenador'}
         </h1>
         <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#F59E0B] mt-2">
-          {isEdit ? 'ATUALIZAR DADOS INTEGRADOS NO MS-TIPO-USUARIO' : 'CADASTRAR NOVO PROFESSOR'}
+          {isEdit ? 'ATUALIZAR DADOS INTEGRADOS NO MS-TIPO-USUARIO' : 'CADASTRAR NOVO COORDENADOR'}
         </p>
       </div>
 
@@ -175,7 +175,7 @@ const ProfessorForm = () => {
         {/* Card 1: Informações Pessoais & Acadêmicas */}
         <div className="bg-white dark:bg-[#020617] p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
           <h2 className="text-xs font-black uppercase tracking-widest text-[#F59E0B] border-b border-slate-100 dark:border-slate-800 pb-3">
-             1. Dados Pessoais & Acadêmicos
+             1. Dados Pessoais & Coordenadoria
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -185,9 +185,21 @@ const ProfessorForm = () => {
                 type="text"
                 {...register('name')}
                 className={`w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border ${errors.name ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-lg text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#F59E0B] outline-none`}
-                placeholder="Nome do professor"
+                placeholder="Nome do coordenador"
               />
               {errors.name && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.name.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">MATRÍCULA</label>
+              <input
+                type="text"
+                {...register('matricula')}
+                disabled={isEdit}
+                className={`w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border ${errors.matricula ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-lg text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#F59E0B] outline-none disabled:opacity-60`}
+                placeholder="Matrícula do coordenador"
+              />
+              {errors.matricula && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.matricula.message}</p>}
             </div>
 
             <div>
@@ -196,7 +208,7 @@ const ProfessorForm = () => {
                 type="email"
                 {...register('email')}
                 className={`w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border ${errors.email ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-lg text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#F59E0B] outline-none`}
-                placeholder="professor@uniacademic.com"
+                placeholder="coordenador@uniacademic.com"
               />
               {errors.email && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.email.message}</p>}
             </div>
@@ -215,17 +227,6 @@ const ProfessorForm = () => {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">DEPARTAMENTO</label>
-              <input
-                type="text"
-                {...register('department')}
-                className={`w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border ${errors.department ? 'border-red-500' : 'border-slate-200 dark:border-slate-800'} rounded-lg text-sm font-bold text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-[#F59E0B] outline-none`}
-                placeholder="Ex: Ciência da Computação"
-              />
-              {errors.department && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.department.message}</p>}
-            </div>
-
-            <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">TITULAÇÃO</label>
               <select
                 {...register('titulacao')}
@@ -239,7 +240,6 @@ const ProfessorForm = () => {
               </select>
             </div>
 
-            {/* NOVOS CAMPOS MS-TIPO-USUARIO */}
             <div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">CELULAR</label>
               <input
@@ -389,11 +389,11 @@ const ProfessorForm = () => {
             disabled={isSubmitting}
             className="flex-1 py-4 bg-[#0B0F19] dark:bg-[#F59E0B] text-white dark:text-[#0B0F19] font-black uppercase text-[11px] tracking-widest rounded-lg hover:bg-slate-800 dark:hover:bg-[#D97706] transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? 'Salvando...' : (isEdit ? 'Atualizar Professor' : 'Cadastrar Professor')}
+            {isSubmitting ? 'Salvando...' : (isEdit ? 'Atualizar Coordenador' : 'Cadastrar Coordenador')}
           </button>
           <button
             type="button"
-            onClick={() => navigate(ROUTES.ADMIN.PROFESSORES)}
+            onClick={() => navigate('/admin/coordenadores')}
             className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-black uppercase text-[11px] tracking-widest rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
           >
             Cancelar
@@ -404,4 +404,4 @@ const ProfessorForm = () => {
   );
 };
 
-export default ProfessorForm;
+export default CoordenadorForm;

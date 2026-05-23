@@ -2,7 +2,7 @@
  * @module config
  * @description Barrel export para todas as configurações centralizadas.
  */
-export { API_BASE_URL, API_ENDPOINTS } from './api.config';
+export { API_BASE_URL, API_ENDPOINTS, API_TIPO_USUARIO_BASE_URL, API_TIPO_USUARIO_ENDPOINTS } from './api.config';
 export { 
   getRandomAvatarUrl,
   generateNewAvatarUrl,

@@ -39,3 +39,32 @@ export const API_ENDPOINTS = {
     BY_ID: (id) => `${API_BASE_URL}/acessos/${id}`,
   },
 };
+
+/** Proxy prefix para ms-tipo-usuario */
+export const API_TIPO_USUARIO_BASE_URL = '/api/ms-tipo-usuario';
+
+/** Endpoints do microserviço de tipo de usuário */
+export const API_TIPO_USUARIO_ENDPOINTS = {
+  ALUNOS: {
+    BASE: `${API_TIPO_USUARIO_BASE_URL}/alunos`,
+    BY_ID: (id) => `${API_TIPO_USUARIO_BASE_URL}/alunos/${id}`,
+    BY_MATRICULA: (m) => `${API_TIPO_USUARIO_BASE_URL}/alunos/matricula/${m}`,
+    ENDERECO: (id) => `${API_TIPO_USUARIO_BASE_URL}/alunos/${id}/endereco`,
+  },
+  PROFESSORES: {
+    BASE: `${API_TIPO_USUARIO_BASE_URL}/professores`,
+    BY_ID: (id) => `${API_TIPO_USUARIO_BASE_URL}/professores/${id}`,
+    BY_MATRICULA: (m) => `${API_TIPO_USUARIO_BASE_URL}/professores/matricula/${m}`,
+    ENDERECO: (id) => `${API_TIPO_USUARIO_BASE_URL}/professores/${id}/endereco`,
+  },
+  COORDENADORES: {
+    BASE: `${API_TIPO_USUARIO_BASE_URL}/coordenadores`,
+    BY_ID: (id) => `${API_TIPO_USUARIO_BASE_URL}/coordenadores/${id}`,
+    BY_MATRICULA: (m) => `${API_TIPO_USUARIO_BASE_URL}/coordenadores/matricula/${m}`,
+    ENDERECO: (id) => `${API_TIPO_USUARIO_BASE_URL}/coordenadores/${id}/endereco`,
+  },
+  DOCUMENTOS: {
+    ALUNO: (id) => `${API_TIPO_USUARIO_BASE_URL}/documentos/${id}/alunos`,
+  },
+};
+

@@ -44,6 +44,14 @@ const AdminSidebar = () => {
         </NavLink>
         
         <NavLink 
+          to={`${basePath}/coordenadores`} 
+          className={({ isActive }) => `flex items-center gap-3 px-4 py-2 transition-colors text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-accent' : 'text-slate-400 hover:text-accent'}`}
+        >
+          <span className="material-symbols-outlined">supervisor_account</span>
+          <span className="text-sm font-medium">Coordenadores</span>
+        </NavLink>
+        
+        <NavLink 
           to={`${basePath}/turmas`} 
           className={({ isActive }) => `flex items-center gap-3 px-4 py-2 transition-colors text-[10px] font-black uppercase tracking-widest ${isActive ? 'text-accent' : 'text-slate-400 hover:text-accent'}`}
         >
