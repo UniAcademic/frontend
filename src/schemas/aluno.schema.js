@@ -31,7 +31,7 @@ export const alunoEditSchema = z.object({
   ra: z.string().min(6, 'RA deve ter no mínimo 6 caracteres').regex(/^\d+$/, 'RA deve conter apenas números'),
   email: z.string().email('E-mail inválido'),
   password: z.string().optional().refine(val => !val || val.length >= 6, 'Senha deve ter no mínimo 6 caracteres'),
-  curso: z.string().min(1, 'Selecione um curso'),
+  curso: z.string().optional(),
   status: z.enum(['Ativo', 'Inativo'], { required_error: 'Selecione um status' }),
   celular: z.string().regex(/^\d{11}$/, 'Celular deve ter 11 dígitos numéricos').optional().or(z.literal('')),
   cpf: z.string().regex(/^\d{11}$/, 'CPF deve ter 11 dígitos numéricos').optional().or(z.literal('')),

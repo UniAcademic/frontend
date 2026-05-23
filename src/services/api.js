@@ -254,6 +254,37 @@ const api = {
     });
   },
 
+  // Create / Update / Delete Turma (mock)
+  createTurma: async (payload) => {
+    // Try real backend first
+    try {
+      const { data } = await httpTipoUsuario.post('/turmas', payload);
+      return data;
+    } catch (err) {
+      console.error('createTurma backend error:', err?.response?.status, err?.response?.data || err.message);
+      // Re-throw so caller can show the error (403/403 body) instead of silently falling back
+      throw err;
+    }
+  },
+  updateTurma: async (id, payload) => {
+    try {
+      const { data } = await httpTipoUsuario.patch(`/turmas/${id}`, payload);
+      return data;
+    } catch (err) {
+      console.error('updateTurma backend error:', err?.response?.status, err?.response?.data || err.message);
+      throw err;
+    }
+  },
+  deleteTurma: async (id) => {
+    try {
+      const { data } = await httpTipoUsuario.delete(`/turmas/${id}`);
+      return data;
+    } catch (err) {
+      console.error('deleteTurma backend error:', err?.response?.status, err?.response?.data || err.message);
+      throw err;
+    }
+  },
+
   // Cursos
   getCursos: async () => { await delay(); return db.cursos; },
 

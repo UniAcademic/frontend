@@ -13,6 +13,7 @@ const AlunoForm = () => {
   const isEdit = !!id;
   const [loading, setLoading] = useState(isEdit);
   const [cursos, setCursos] = useState([]);
+  const [showCursoSelector, setShowCursoSelector] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [alunoData, setAlunoData] = useState(null);
 
@@ -26,6 +27,7 @@ const AlunoForm = () => {
     register,
     handleSubmit,
     reset,
+    setValue,
     watch,
     formState: { errors, isSubmitting }
   } = useForm({
@@ -48,13 +50,15 @@ const AlunoForm = () => {
           if (aluno) {
             setAlunoData(aluno);
             
+            console.log('📥 Loaded aluno data:', JSON.stringify(aluno, null, 2));
+            
             // Format date for the date input (YYYY-MM-DD)
             let formattedDate = '';
             if (aluno.data_nascimento) {
               formattedDate = aluno.data_nascimento.split('T')[0];
             }
 
-            reset({
+            const formValues = {
               name: aluno.nome || aluno.name || '',
               ra: aluno.matricula || aluno.ra || '',
               email: aluno.email || '',
@@ -74,7 +78,10 @@ const AlunoForm = () => {
               cidade: aluno.endereco?.cidade || '',
               estado: aluno.endereco?.estado || '',
               pais: aluno.endereco?.pais || 'Brasil',
-            });
+            };
+            
+            console.log('📝 Form values to reset:', JSON.stringify(formValues, null, 2));
+            reset(formValues);
           }
         }
       } catch (error) {
@@ -87,7 +94,29 @@ const AlunoForm = () => {
   }, [id, isEdit, reset]);
 
   const onSubmit = async (formData) => {
+    console.log('📝 Form submission attempted');
+    console.log('Form data received:', JSON.stringify(formData, null, 2));
+    console.log('Form errors:', errors);
+    console.log('Is edit mode:', isEdit);
+    
     setSubmitError('');
+    
+    // Na edição, permite deixar curso vazio (não atualiza se não mudar)
+    if (isEdit && !formData.curso) {
+      console.log('✅ Curso vazio na edição - será ignorado na atualização');
+    }
+    
+    // Verifica se há erros de validação (exceto curso em edit mode)
+    const relevantErrors = isEdit ? 
+      Object.keys(errors).filter(k => k !== 'curso') : 
+      Object.keys(errors);
+    
+    if (relevantErrors.length > 0) {
+      console.error('❌ Validation errors found:', errors);
+      setSubmitError(`Erros de validação: ${relevantErrors.map(k => `${k}: ${errors[k]?.message}`).join(', ')}`);
+      return;
+    }
+    
     try {
       if (isEdit) {
         // 1. Update personal & academic info using PATCH (ms-tipo-usuario)
@@ -98,9 +127,16 @@ const AlunoForm = () => {
           cpf: formData.cpf || null,
           rg: formData.rg || null,
           data_nascimento: formData.data_nascimento ? `${formData.data_nascimento}T00:00:00Z` : null,
-          ano_ingresso: formData.ano_ingresso ? parseInt(formData.ano_ingresso) : null
+          ano_ingresso: formData.ano_ingresso ? parseInt(formData.ano_ingresso) : null,
+          // If admin left curso blank on edit, keep existing alunoData.curso
+          curso: formData.curso && formData.curso.trim() !== '' ? formData.curso : (alunoData?.curso || null)
         };
-        await api.atualizarAlunoAPI(id, alunoPayload);
+
+        console.log('📝 Editing aluno with ID:', id);
+        console.log('📤 Aluno payload:', JSON.stringify(alunoPayload, null, 2));
+
+        const alunoResponse = await api.atualizarAlunoAPI(id, alunoPayload);
+        console.log('✅ Aluno update response:', alunoResponse);
 
         // 2. Update address if populated
         if (formData.cep || formData.logradouro) {
@@ -114,7 +150,9 @@ const AlunoForm = () => {
             estado: formData.estado || null,
             pais: formData.pais || 'Brasil'
           };
-          await api.atualizarEnderecoAlunoAPI(id, enderecoPayload);
+          console.log('📤 Endereco payload:', JSON.stringify(enderecoPayload, null, 2));
+          const enderecoResponse = await api.atualizarEnderecoAlunoAPI(id, enderecoPayload);
+          console.log('✅ Endereco update response:', enderecoResponse);
         }
 
         // 3. Fallback: Update user credentials if password/email changed on ms-usuario
@@ -126,19 +164,32 @@ const AlunoForm = () => {
           if (formData.password) {
             userUpdate.password = formData.password;
           }
-          await api.updateUser(alunoData.usuarioId, userUpdate);
+          console.log('📤 User update payload:', JSON.stringify(userUpdate, null, 2));
+          const userResponse = await api.updateUser(alunoData.usuarioId, userUpdate);
+          console.log('✅ User update response:', userResponse);
         }
+
+        console.log('✅ Edição concluída com sucesso! Redirecionando...');
+        setSubmitError(''); // Clear any previous errors
+        navigate(ROUTES.ADMIN.ALUNOS);
       } else {
         // Create new user (using real ms-usuario creation endpoint)
         const avatar = generateNewAvatarUrl();
-        const newUser = await api.createUsuarioAPI({
+        const payload = {
           nome: formData.name,
           email: formData.email,
           senha: formData.password,
           tipo_usuario: 'ALUNO',
           celular: formData.celular || '',
-          matricula: formData.ra
-        });
+          matricula: formData.ra,
+          roles: [{ role: 'ALUNO' }]
+        };
+        
+        console.log('📤 Payload being sent to /usuarios:', JSON.stringify(payload, null, 2));
+        
+        const newUser = await api.createUsuarioAPI(payload);
+        
+        console.log('✅ Response from /usuarios:', newUser);
         
         // Simular/criar acadêmico local
         await api.createAluno({
@@ -154,9 +205,35 @@ const AlunoForm = () => {
       }
       navigate(ROUTES.ADMIN.ALUNOS);
     } catch (error) {
-      console.error('Error saving aluno:', error);
-      setSubmitError('Erro ao salvar. Verifique os dados inseridos.');
-    }
+      console.error('❌ Full error object:', error);
+      console.error('Error response data:', error?.response?.data);
+      console.error('Error status:', error?.response?.status);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
+      
+      // Log detalhado dos erros
+      if (error?.response?.data?.erros && Array.isArray(error.response.data.erros)) {
+        console.error('🔍 Detalhes dos erros:');
+        error.response.data.erros.forEach((err, idx) => {
+          console.error(`  Erro ${idx + 1}:`, JSON.stringify(err, null, 2));
+        });
+      }
+      
+      // Extrai mensagem de erro mais específica
+      let errorMessage = error?.response?.data?.mensagem || 
+                        error?.response?.data?.message ||
+                        error?.response?.data?.errors?.[0]?.message ||
+                        error?.message ||
+                        'Erro ao salvar. Verifique os dados inseridos.';
+      
+      // Se houver erros detalhados, adiciona à mensagem
+      if (error?.response?.data?.erros && Array.isArray(error.response.data.erros) && error.response.data.erros.length > 0) {
+        const errorsDetail = error.response.data.erros.map(e => e.mensagem || e.message || e).join(' | ');
+        errorMessage = `${errorMessage} - ${errorsDetail}`;
+      }
+      
+      console.error('🚨 Final error message:', errorMessage);
+      setSubmitError(errorMessage);
   };
 
   // Upload document
@@ -296,16 +373,51 @@ const AlunoForm = () => {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">CURSO</label>
-              <select
-                {...register('curso')}
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white focus:ring-1 focus:ring-[#F59E0B] outline-none"
-              >
-                <option value="">Selecione...</option>
-                {cursos.map(c => (
-                  <option key={c.id} value={c.name}>{c.name}</option>
-                ))}
-              </select>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                CURSO {!isEdit && <span className="text-red-500">*</span>} {isEdit && <span className="text-slate-400 text-xs font-normal">(Opcional)</span>}
+              </label>
+              {isEdit ? (
+                <div>
+                  {!showCursoSelector ? (
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="text-sm font-bold text-slate-900 dark:text-white">{alunoData?.curso || '—'}</div>
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => setShowCursoSelector(true)} className="px-3 py-2 bg-[#F59E0B] text-white rounded text-sm font-black uppercase tracking-widest">Alterar</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <select
+                        {...register('curso')}
+                        defaultValue={alunoData?.curso || ''}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white focus:ring-1 focus:ring-[#F59E0B] outline-none"
+                      >
+                        <option value="">(Manter curso atual)</option>
+                        {cursos
+                          .filter(c => !(alunoData?.curso && c.name === alunoData.curso))
+                          .map(c => (
+                            <option key={c.id} value={c.name}>{c.name}</option>
+                          ))}
+                      </select>
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => { setShowCursoSelector(false); setValue('curso', ''); }} className="px-3 py-2 bg-slate-200 text-slate-900 rounded text-sm font-bold">Cancelar</button>
+                        <button type="button" onClick={() => setShowCursoSelector(false)} className="px-3 py-2 bg-green-600 text-white rounded text-sm font-bold">OK</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <select
+                  {...register('curso')}
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white focus:ring-1 focus:ring-[#F59E0B] outline-none"
+                >
+                  <option value="">Selecione um curso...</option>
+                  {cursos.map(c => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+              )}
+              {!isEdit && errors.curso && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest mt-1.5">{errors.curso.message}</p>}
             </div>
 
             <div>
@@ -547,5 +659,5 @@ const AlunoForm = () => {
     </div>
   );
 };
-
+}
 export default AlunoForm;

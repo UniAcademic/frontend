@@ -82,17 +82,49 @@ const AdminEntityForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('📤 AdminEntityForm handleSubmit called', { entityType, formData });
     try {
       if (isEdit) {
-        if (entityType === 'alunos') await api.updateAluno(parseInt(id), formData);
-        else if (entityType === 'professores') await api.updateProfessor(parseInt(id), formData);
+        if (entityType === 'alunos') {
+          console.log('Calling api.updateAluno', id, formData);
+          const res = await api.updateAluno(parseInt(id), formData);
+          console.log('api.updateAluno response', res);
+        } else if (entityType === 'professores') {
+          console.log('Calling api.updateProfessor', id, formData);
+          const res = await api.updateProfessor(parseInt(id), formData);
+          console.log('api.updateProfessor response', res);
+        } else if (entityType === 'turmas') {
+          console.log('Calling api.updateTurma', id, formData);
+          const res = await api.updateTurma(parseInt(id), formData);
+          console.log('api.updateTurma response', res);
+        } else if (entityType === 'disciplinas') {
+          console.log('Calling api.updateDisciplina', id, formData);
+          const res = api.updateDisciplina ? await api.updateDisciplina(parseInt(id), formData) : null;
+          console.log('api.updateDisciplina response', res);
+        }
       } else {
-        if (entityType === 'alunos') await api.createAluno(formData);
-        else if (entityType === 'professores') await api.createProfessor(formData);
+        if (entityType === 'alunos') {
+          console.log('Calling api.createAluno', formData);
+          const res = await api.createAluno(formData);
+          console.log('api.createAluno response', res);
+        } else if (entityType === 'professores') {
+          console.log('Calling api.createProfessor', formData);
+          const res = await api.createProfessor(formData);
+          console.log('api.createProfessor response', res);
+        } else if (entityType === 'turmas') {
+          console.log('Calling api.createTurma', formData);
+          const res = await api.createTurma(formData);
+          console.log('api.createTurma response', res);
+        } else if (entityType === 'disciplinas') {
+          console.log('Calling api.createDisciplina', formData);
+          const res = api.createDisciplina ? await api.createDisciplina(formData) : null;
+          console.log('api.createDisciplina response', res);
+        }
       }
       navigate(`/admin/${entityType}`);
     } catch (error) {
-      alert("Erro ao salvar: " + error.message);
+      console.error('Erro ao salvar entidade:', error);
+      alert("Erro ao salvar: " + (error?.message || String(error)));
     }
   };
 
@@ -130,12 +162,11 @@ const AdminEntityForm = () => {
                 </label>
                 {field.type === 'select' ? (
                   <select
-                    name={field.name}
-                    value={formData[field.name] || ''}
-                    onChange={handleChange}
-                    className="w-full bg-slate-50 dark:bg-[#0B0F19] border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl text-sm px-4 py-3 outline-none focus:ring-1 focus:ring-[#F59E0B]"
-                    required
-                  >
+                      name={field.name}
+                      value={formData[field.name] || ''}
+                      onChange={handleChange}
+                      className="w-full bg-slate-50 dark:bg-[#0B0F19] border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl text-sm px-4 py-3 outline-none focus:ring-1 focus:ring-[#F59E0B]"
+                    >
                     <option value="">Selecione...</option>
                     {field.options.map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
@@ -149,7 +180,6 @@ const AdminEntityForm = () => {
                     onChange={handleChange}
                     placeholder={field.placeholder}
                     className="w-full bg-slate-50 dark:bg-[#0B0F19] border border-slate-100 dark:border-slate-800 text-slate-900 dark:text-white rounded-xl text-sm px-4 py-3 outline-none focus:ring-1 focus:ring-[#F59E0B]"
-                    required
                   />
                 )}
               </div>
