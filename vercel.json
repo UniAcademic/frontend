@@ -3,6 +3,10 @@
     {
       "source": "/api/ms-usuario/:path*",
       "destination": "http://ec2-3-13-7-224.us-east-2.compute.amazonaws.com/ms-usuario/api/v1/:path*"
+    },
+    {
+      "source": "/api/ms-tipo-usuario/:path*",
+      "destination": "http://ec2-3-13-7-224.us-east-2.compute.amazonaws.com/ms-tipo-usuario/api/v1/:path*"
     }
   ]
 }
