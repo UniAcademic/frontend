@@ -4,8 +4,10 @@
  * Nenhuma URL de API deve ser hardcoded em componentes ou services.
  */
 
-/** Proxy prefix configurado no vite.config.js */
-export const API_BASE_URL = '/api/ms-usuario';
+/** API base URL: use `VITE_API_BASE_URL` em produção (Amplify).
+ *  O valor padrão '/api/ms-usuario' é usado apenas para desenvolvimento (proxy Vite).
+ */
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/ms-usuario';
 
 /** Endpoints do microserviço de usuários */
 export const API_ENDPOINTS = {
