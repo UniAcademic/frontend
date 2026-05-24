@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_ENDPOINTS } from '@/config/api.config';
 import { getAuthHeaders } from '@/lib/http';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 const Roles = () => {
   const { user } = useAuth();
@@ -13,6 +15,7 @@ const Roles = () => {
   const [formData, setFormData] = useState({ role: '', descricao: '' });
   const [saving, setSaving] = useState(false);
   const [editingRole, setEditingRole] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({ role: '', descricao: '' });
   const [originalForm, setOriginalForm] = useState(null);
   const [editSaving, setEditSaving] = useState(false);
@@ -29,6 +32,7 @@ const Roles = () => {
   const [linkSaving, setLinkSaving] = useState(false);
   const [acessoSearch, setAcessoSearch] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [exporting, setExporting] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -44,7 +48,20 @@ const Roles = () => {
       const res = await fetch(API_ENDPOINTS.ROLES.BASE, buildAuthHeaders());
       if (!res.ok) throw new Error(`Erro ${res.status}`);
       const data = await res.json();
-      setRoles(data.content || data || []);
+      const rawRoles = data.content || data || [];
+      // Deduplica acessos dentro de cada role
+      const deduped = rawRoles.map(r => {
+        const acessosList = r.acessos || r.acesso || [];
+        const seen = new Set();
+        const uniqueAcessos = acessosList.filter(a => {
+          const name = typeof a === 'string' ? a : a.acesso || a.nome || '';
+          if (seen.has(name)) return false;
+          seen.add(name);
+          return true;
+        });
+        return { ...r, acessos: uniqueAcessos };
+      });
+      setRoles(deduped);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -58,10 +75,19 @@ const Roles = () => {
   const fetchAllAcessos = async () => {
     setLoadingAcessos(true);
     try {
-      const res = await fetch(API_ENDPOINTS.ACESSOS.BASE, buildAuthHeaders());
+      const res = await fetch(`${API_ENDPOINTS.ACESSOS.BASE}?size=9999`, buildAuthHeaders());
       if (!res.ok) throw new Error(`Erro ${res.status}`);
       const data = await res.json();
-      setAllAcessos(data.content || data || []);
+      const raw = data.content || data || [];
+      // Deduplica por nome do acesso
+      const seen = new Set();
+      const unique = raw.filter(a => {
+        const name = typeof a === 'string' ? a : a.acesso || a.nome || '';
+        if (seen.has(name)) return false;
+        seen.add(name);
+        return true;
+      });
+      setAllAcessos(unique);
     } catch (err) {
       console.error('Erro ao buscar acessos:', err);
       setAllAcessos([]);
@@ -73,9 +99,9 @@ const Roles = () => {
   // Open the link acessos modal for a specific role
   const openLinkModal = (role) => {
     // Pre-select acessos already linked to this role
-    const alreadyLinked = (role.acessos || role.acesso || []).map(a =>
+    const alreadyLinked = [...new Set((role.acessos || role.acesso || []).map(a =>
       typeof a === 'string' ? a : a.acesso || a.nome
-    );
+    ))];
     setSelectedAcessos(alreadyLinked);
     setLinkModalRoleId(role.id);
     setLinkModalRoleName(role.role || role.nome);
@@ -173,10 +199,12 @@ const Roles = () => {
     const snapshot = { role: r.role || r.nome || '', descricao: r.descricao || '' };
     setEditForm(snapshot);
     setOriginalForm(snapshot);
+    setShowEditModal(true);
   };
 
   const cancelEdit = () => {
     setEditingRole(null);
+    setShowEditModal(false);
     setEditForm({ role: '', descricao: '' });
     setOriginalForm(null);
   };
@@ -240,12 +268,54 @@ const Roles = () => {
             CONTROLE DE ACESSO • {filtered.length} REGISTROS
           </p>
         </div>
-        <button
-          onClick={() => { setShowForm(!showForm); setEditingRole(null); }}
-          className="bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[10px] font-black uppercase tracking-widest py-3 px-6 rounded-xl transition-all shadow-lg shadow-[#F59E0B]/10 flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px]">add</span>
-          NOVA ROLE
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={async () => {
+              if (exporting || !roles.length) return;
+              setExporting(true);
+              try {
+                const res = await fetch(`${API_ENDPOINTS.ROLES.BASE}?size=9999`, buildAuthHeaders());
+                const data = await res.json();
+                const allData = data.content || data || [];
+                const cols = [
+                  { key: 'id', label: 'ID', w: 46.43 },
+                  { key: 'role', label: 'ROLE', w: 105.14 },
+                  { key: 'descricao', label: 'DESCRI\u00c7\u00c3O', w: 40 },
+                  { key: 'acessos', label: 'ACESSOS', w: 60 },
+                ];
+                const workbook = new ExcelJS.Workbook();
+                workbook.creator = 'UniAcadem';
+                const ws = workbook.addWorksheet('Roles');
+                ws.columns = cols.map(c => ({ width: c.w }));
+                ws.addTable({ name: 'TabelaRoles', ref: 'A1', headerRow: true, totalsRow: false, style: { theme: 'TableStyleMedium2', showRowStripes: true }, columns: cols.map(c => ({ name: c.label, filterButton: true })), rows: allData.map(r => cols.map(c => {
+                  if (c.key === 'acessos') {
+                    const acessosList = r.acessos || r.acesso || [];
+                    return acessosList.map(a => typeof a === 'string' ? a : a.acesso || a.nome || '').join(', ');
+                  }
+                  return r[c.key] ?? '';
+                })) });
+                const headerRow = ws.getRow(1);
+                headerRow.eachCell(cell => { cell.font = { bold: true, color: { argb: 'FF000000' }, size: 11 }; cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD97706' } }; cell.alignment = { horizontal: 'center', vertical: 'middle' }; });
+                headerRow.height = 28;
+                for (let i = 2; i <= ws.rowCount; i++) { ws.getRow(i).eachCell(cell => { cell.alignment = { vertical: 'middle', wrapText: true }; }); ws.getRow(i).height = 22; }
+                const buffer = await workbook.xlsx.writeBuffer();
+                saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `uniacadem_roles_${new Date().toISOString().split('T')[0]}.xlsx`);
+                showToast(`${allData.length} roles exportadas com sucesso!`);
+              } catch (err) { console.error(err); showToast('Erro ao exportar.', 'error'); } finally { setExporting(false); }
+            }}
+            disabled={exporting}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-widest py-3 px-5 rounded-xl transition-all shadow-lg shadow-emerald-600/10 flex items-center gap-2 disabled:opacity-50"
+          >
+            {exporting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <span className="material-symbols-outlined text-[16px]">file_download</span>}
+            {exporting ? 'EXPORTANDO...' : 'EXCEL'}
+          </button>
+          <button
+            onClick={() => { setShowForm(!showForm); setEditingRole(null); }}
+            className="bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[10px] font-black uppercase tracking-widest py-3 px-6 rounded-xl transition-all shadow-lg shadow-[#F59E0B]/10 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            NOVA ROLE
+          </button>
+        </div>
       </div>
 
       {/* Create Role Modal */}
@@ -323,7 +393,7 @@ const Roles = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setSelectedAcessos(filteredAcessos.map(a => typeof a === 'string' ? a : a.acesso || a.nome))}
+                  onClick={() => setSelectedAcessos([...new Set([...selectedAcessos, ...filteredAcessos.map(a => typeof a === 'string' ? a : a.acesso || a.nome)])])}
                   className="text-[9px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-700 transition-colors"
                 >
                   Selecionar todos
@@ -342,8 +412,8 @@ const Roles = () => {
             {/* Acessos list */}
             <div className="flex-1 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 min-h-[200px] max-h-[400px]">
               {loadingAcessos ? (
-                <div className="p-10 flex justify-center">
-                  <div className="w-6 h-6 border-3 border-[#F59E0B] border-t-transparent rounded-full animate-spin"></div>
+                <div className="p-10 flex items-center justify-center min-h-[200px]">
+                  <div className="w-8 h-8 border-4 border-[#F59E0B] border-t-transparent rounded-full animate-spin"></div>
                 </div>
               ) : filteredAcessos.length === 0 ? (
                 <div className="p-8 text-center text-slate-400 uppercase text-[10px] font-black tracking-widest">
@@ -445,20 +515,10 @@ const Roles = () => {
                   <tr key={r.id || r.role} className="hover:bg-slate-50 dark:hover:bg-slate-800/10 transition-colors">
                     <td className="px-8 py-5"><span className="text-[10px] font-black text-slate-400">#{r.id}</span></td>
                     <td className="px-6 py-5">
-                      {editingRole === r.id ? (
-                        <input type="text" value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})}
-                          className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
-                      ) : (
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">{r.role || r.nome}</span>
-                      )}
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">{r.role || r.nome}</span>
                     </td>
                     <td className="px-6 py-5">
-                      {editingRole === r.id ? (
-                        <input type="text" value={editForm.descricao} onChange={e => setEditForm({...editForm, descricao: e.target.value})}
-                          className="bg-slate-50 dark:bg-[#0B0F19] border border-blue-300 dark:border-blue-700 text-slate-900 dark:text-white px-3 py-1.5 rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 w-full" />
-                      ) : (
-                        <span className="text-xs text-slate-500">{r.descricao}</span>
-                      )}
+                      <span className="text-xs text-slate-500">{r.descricao}</span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex flex-wrap gap-1">
@@ -474,33 +534,18 @@ const Roles = () => {
                     </td>
                     <td className="px-8 py-5 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {editingRole === r.id ? (
-                          <>
-                            <button onClick={() => handleUpdate(r.id)} disabled={editSaving}
-                              className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 hover:bg-emerald-200 flex items-center justify-center transition-colors disabled:opacity-50" title="Salvar">
-                              <span className="material-symbols-outlined text-[18px]">check</span>
-                            </button>
-                            <button onClick={cancelEdit}
-                              className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 flex items-center justify-center transition-colors" title="Cancelar">
-                              <span className="material-symbols-outlined text-[18px]">close</span>
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button onClick={() => setViewingRole(r)}
-                              className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-emerald-500 flex items-center justify-center transition-colors" title="Visualizar Role">
-                              <span className="material-symbols-outlined text-[18px]">visibility</span>
-                            </button>
-                            <button onClick={() => startEdit(r)}
-                              className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 flex items-center justify-center transition-colors" title="Editar Role">
-                              <span className="material-symbols-outlined text-[18px]">edit</span>
-                            </button>
-                            <button onClick={() => openLinkModal(r)}
-                              className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-700 flex items-center justify-center transition-colors" title="Vincular Acessos">
-                              <span className="material-symbols-outlined text-[18px]">link</span>
-                            </button>
-                          </>
-                        )}
+                        <button onClick={() => setViewingRole(r)}
+                          className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-emerald-500 flex items-center justify-center transition-colors" title="Visualizar Role">
+                          <span className="material-symbols-outlined text-[18px]">visibility</span>
+                        </button>
+                        <button onClick={() => startEdit(r)}
+                          className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:text-blue-500 flex items-center justify-center transition-colors" title="Editar Role">
+                          <span className="material-symbols-outlined text-[18px]">edit</span>
+                        </button>
+                        <button onClick={() => openLinkModal(r)}
+                          className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-700 flex items-center justify-center transition-colors" title="Vincular Acessos">
+                          <span className="material-symbols-outlined text-[18px]">link</span>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -513,6 +558,59 @@ const Roles = () => {
           <div className="p-10 text-center text-slate-400 uppercase text-[10px] font-black tracking-widest">Nenhuma role encontrada</div>
         )}
       </div>
+
+      {/* Edit Role Modal */}
+      {showEditModal && editingRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#020617] w-full max-w-xl p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-6 shadow-2xl relative">
+            <button type="button" onClick={cancelEdit} className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+
+            <div>
+              <h2 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-slate-100 mb-1">Editar Role</h2>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Atualize os dados da role</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Nome da Role</label>
+                <input
+                  type="text"
+                  placeholder="Ex: COORDENADOR"
+                  value={editForm.role}
+                  onChange={e => setEditForm({ ...editForm, role: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#F59E0B]"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1 block">Descrição</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Coordenador de curso"
+                  value={editForm.descricao}
+                  onChange={e => setEditForm({ ...editForm, descricao: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white px-4 py-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#F59E0B]"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800/50">
+              <button
+                onClick={() => handleUpdate(editingRole)}
+                disabled={editSaving}
+                className="flex-1 bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-[#F59E0B]/20"
+              >
+                {editSaving ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES'}
+              </button>
+              <button type="button" onClick={cancelEdit}
+                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all">
+                CANCELAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* View Role Modal */}
       {viewingRole && (
@@ -543,8 +641,8 @@ const Roles = () => {
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Acessos Vinculados</label>
                 <div className="flex flex-wrap gap-1.5 mt-1">
-                  {(viewingRole.acessos || viewingRole.acesso || []).length > 0 ? (
-                    (viewingRole.acessos || viewingRole.acesso || []).map((a, i) => (
+                  {(viewingRole.acessos || []).length > 0 ? (
+                    (viewingRole.acessos || []).map((a, i) => (
                       <span key={i} className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
                         {typeof a === 'string' ? a : a.acesso || a.nome}
                       </span>
