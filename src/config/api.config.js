@@ -9,6 +9,15 @@
  */
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/ms-usuario';
 
+// Aviso em tempo de execução: em builds de produção, uma `API_BASE_URL` relativa
+// provavelmente significa que a aplicação está apontando para o próprio domínio estático
+// (ex: Amplify) em vez do backend. Isso causa erros 404 nas chamadas de API.
+if (import.meta.env.PROD && API_BASE_URL && API_BASE_URL.startsWith('/')) {
+  // eslint-disable-next-line no-console
+  console.warn('[config/api] API_BASE_URL parece relativa em produção:', API_BASE_URL,
+    '— verifique suas variáveis de ambiente (VITE_API_BASE_URL) no CI/Amplify.');
+}
+
 /** Endpoints do microserviço de usuários */
 export const API_ENDPOINTS = {
   AUTH: {
