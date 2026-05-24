@@ -43,7 +43,7 @@ export const API_ENDPOINTS = {
 };
 
 /** Proxy prefix para ms-tipo-usuario */
-export const API_TIPO_USUARIO_BASE_URL = '/api/ms-tipo-usuario';
+export const API_TIPO_USUARIO_BASE_URL = import.meta.env.VITE_API_TIPO_USUARIO_BASE_URL || '/api/ms-tipo-usuario';
 
 /** Endpoints do microserviço de tipo de usuário */
 export const API_TIPO_USUARIO_ENDPOINTS = {
