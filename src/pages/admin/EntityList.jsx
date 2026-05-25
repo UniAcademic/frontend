@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import api from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +26,20 @@ const AdminEntityList = () => {
   const [editForm, setEditForm] = useState({});
   const [enderecoForm, setEnderecoForm] = useState({ cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', pais: '' });
   const [editSaving, setEditSaving] = useState(false);
+
+  // Document states (edit modal - alunos only)
+  const [docList, setDocList] = useState([]);
+  const [docListLoading, setDocListLoading] = useState(false);
+  const [docUploading, setDocUploading] = useState(false);
+  const [docDownloading, setDocDownloading] = useState({});
+  const [docTipoDoc, setDocTipoDoc] = useState('RG');
+  const [docTipoMidia, setDocTipoMidia] = useState('PNG');
+  const [docMsg, setDocMsg] = useState({ text: '', type: '' });
+  const docFileRef = useRef(null);
+  const DOC_TIPOS = ['RG', 'CPF', 'CNH'];
+  const DOC_MIDIAS = ['PNG', 'JPEG', 'PDF'];
+  const DOC_ACCEPT = { PNG: 'image/png', JPEG: 'image/jpeg', PDF: 'application/pdf' };
+  const DOC_EXT = { PNG: '.png', JPEG: '.jpg', PDF: '.pdf' };
 
   // View Modal states
   const [showViewModal, setShowViewModal] = useState(false);
@@ -299,6 +313,62 @@ const AdminEntityList = () => {
     setEditingEntity(null);
     setEditForm({});
     setEnderecoForm({ cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', pais: '' });
+    setDocList([]);
+    setDocMsg({ text: '', type: '' });
+  };
+
+  const fetchDocList = async (alunoId) => {
+    setDocListLoading(true);
+    try {
+      const docs = await api.listarDocumentosAlunoAPI(alunoId);
+      setDocList(Array.isArray(docs) ? docs : []);
+    } catch { setDocList([]); }
+    finally { setDocListLoading(false); }
+  };
+
+  const handleDocUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingEntity) return;
+    setDocUploading(true);
+    setDocMsg({ text: '', type: '' });
+    try {
+      await api.enviarDocumentoAlunoAPI(editingEntity.id, file, docTipoMidia, docTipoDoc);
+      setDocMsg({ text: `Documento ${docTipoDoc} (${docTipoMidia}) enviado!`, type: 'success' });
+      await fetchDocList(editingEntity.id);
+    } catch (err) {
+      setDocMsg({ text: err?.response?.data?.message || 'Erro ao enviar documento.', type: 'error' });
+    } finally {
+      setDocUploading(false);
+      if (docFileRef.current) docFileRef.current.value = '';
+    }
+  };
+
+  const handleDocDownload = async (doc) => {
+    if (!doc?.id) return;
+    const key = doc.id;
+    setDocDownloading(prev => ({ ...prev, [key]: true }));
+    try {
+      const result = await api.baixarDocumentoAlunoAPI(doc.id);
+      const url = result?.url || result;
+      if (typeof url === 'string' && url.startsWith('http')) {
+        window.open(url, '_blank');
+      } else {
+        // fallback: blob download
+        const blob = new Blob([result]);
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = doc.nome || `documento_${doc.tipoDocumento || 'doc'}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(blobUrl);
+      }
+    } catch (err) {
+      setDocMsg({ text: err?.response?.status === 404 ? 'Documento não encontrado.' : 'Erro ao baixar.', type: 'error' });
+    } finally {
+      setDocDownloading(prev => ({ ...prev, [key]: false }));
+    }
   };
 
   const handleEditUpdate = async () => {
@@ -880,6 +950,15 @@ const AdminEntityList = () => {
                 <span className="material-symbols-outlined text-[16px]">location_on</span>
                 Endereço
               </button>
+              {entityType === 'alunos' && (
+                <button
+                  onClick={() => { setEditTab('documentos'); if (editingEntity) fetchDocList(editingEntity.id); }}
+                  className={`flex-1 py-3 px-4 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${editTab === 'documentos' ? 'bg-[#F59E0B] text-[#020617] shadow-lg shadow-[#F59E0B]/20' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                >
+                  <span className="material-symbols-outlined text-[16px]">folder_open</span>
+                  Documentos
+                </button>
+              )}
             </div>
 
             {/* Tab Content: Dados Pessoais */}
@@ -954,18 +1033,92 @@ const AdminEntityList = () => {
               </div>
             )}
 
+            {/* Tab Content: Documentos (alunos only) */}
+            {editTab === 'documentos' && entityType === 'alunos' && (
+              <div className="space-y-5">
+                {docMsg.text && (
+                  <div className={`p-3 rounded-xl text-xs font-bold ${docMsg.type === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400'}`}>
+                    {docMsg.text}
+                  </div>
+                )}
+
+                {/* Upload */}
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-[#F59E0B]">Enviar Documento</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Tipo</label>
+                      <select value={docTipoDoc} onChange={e => setDocTipoDoc(e.target.value)} className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#F59E0B]">
+                        {DOC_TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Formato</label>
+                      <select value={docTipoMidia} onChange={e => setDocTipoMidia(e.target.value)} className="w-full px-3 py-2.5 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#F59E0B]">
+                        {DOC_MIDIAS.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex items-end">
+                      <input ref={docFileRef} type="file" accept={DOC_ACCEPT[docTipoMidia]} onChange={handleDocUpload} disabled={docUploading} className="hidden" />
+                      <button type="button" onClick={() => docFileRef.current?.click()} disabled={docUploading} className="w-full py-2.5 px-3 bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[9px] font-black uppercase tracking-widest rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">{docUploading ? 'hourglass_top' : 'cloud_upload'}</span>
+                        {docUploading ? 'ENVIANDO...' : 'ENVIAR'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* List */}
+                <div className="space-y-3">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-[#F59E0B]">Documentos Enviados</h3>
+                  {docListLoading ? (
+                    <div className="flex justify-center py-4">
+                      <div className="w-5 h-5 border-4 border-[#F59E0B] border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  ) : docList.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {docList.map((doc, idx) => {
+                        const td = doc.tipoDocumento || doc.tipo_documento || '—';
+                        const nome = doc.nome || td;
+                        const k = doc.id || idx;
+                        return (
+                          <div key={k} className="bg-slate-50/50 dark:bg-[#0B0F19]/50 border border-slate-200 dark:border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="material-symbols-outlined text-[18px] text-[#F59E0B]">description</span>
+                              <div>
+                                <p className="text-xs font-black text-slate-700 dark:text-white uppercase">{td}</p>
+                                <p className="text-[8px] font-bold text-slate-400 truncate max-w-[120px]">{nome}</p>
+                              </div>
+                            </div>
+                            <button type="button" onClick={() => handleDocDownload(doc)} disabled={docDownloading[k]} className="py-1 px-2.5 text-[8px] font-black uppercase tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-slate-600 dark:text-slate-300 hover:border-[#F59E0B] hover:text-[#F59E0B] transition-all disabled:opacity-50 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-[12px]">{docDownloading[k] ? 'hourglass_top' : 'download'}</span>
+                              BAIXAR
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic py-3">Nenhum documento enviado.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Footer */}
             <div className="flex gap-3 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800/50">
-              <button
-                onClick={handleEditUpdate}
-                disabled={editSaving}
-                className="flex-1 bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-[#F59E0B]/20"
-              >
-                {editSaving ? 'SALVANDO...' : editTab === 'dados' ? 'SALVAR DADOS' : 'SALVAR ENDEREÇO'}
-              </button>
+              {editTab !== 'documentos' && (
+                <button
+                  onClick={handleEditUpdate}
+                  disabled={editSaving}
+                  className="flex-1 bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-[#F59E0B]/20"
+                >
+                  {editSaving ? 'SALVANDO...' : editTab === 'dados' ? 'SALVAR DADOS' : 'SALVAR ENDEREÇO'}
+                </button>
+              )}
               <button type="button" onClick={cancelEditModal}
                 className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all">
-                CANCELAR
+                {editTab === 'documentos' ? 'FECHAR' : 'CANCELAR'}
               </button>
             </div>
           </div>

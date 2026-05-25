@@ -135,13 +135,6 @@ const Login = () => {
             Acesso exclusivo para membros da instituição.
           </p>
 
-          <div className="mt-6 p-4 bg-slate-100 dark:bg-slate-800/30 rounded-lg border border-slate-200 dark:border-slate-800">
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Credenciais de demonstração:</p>
-            <p className="text-[10px] text-slate-500 font-mono">Aluno: 00100009 / 2201ads91</p>
-            <p className="text-[10px] text-slate-500 font-mono">Professor: 00100010 / 2201ads91</p>
-            <p className="text-[10px] text-slate-500 font-mono">Admin: 00100011 / 2201ads91</p>
-            <p className="text-[10px] text-slate-500 font-mono">Coordenador: 00100027 / 2201ads91</p>
-          </div>
         </div>
       </div>
     </div>

@@ -14,6 +14,14 @@ const ProfessorDashboard = () => {
 
     const fetchData = async () => {
       try {
+        // Try real API first using matricula
+        let realProfile = null;
+        if (user.matricula) {
+          try {
+            realProfile = await api.getProfessorPorMatriculaAPI(user.matricula);
+          } catch { /* fallback to mock */ }
+        }
+
         const dashboardData = await api.getProfessorDashboard(user.id);
         const disciplines = await api.getProfessorDisciplinas(user.id);
         
@@ -32,8 +40,14 @@ const ProfessorDashboard = () => {
           }
         });
 
+        const profData = realProfile || dashboardData?.professor || user;
+
         setData({
-           professor: dashboardData?.professor || user,
+           professor: {
+             ...profData,
+             name: realProfile?.nome || realProfile?.name || dashboardData?.professor?.name || user?.name,
+             email: realProfile?.email || dashboardData?.professor?.email || user?.email,
+           },
            cursos: uniqueCourses,
            proximasAulas: dashboardData?.proximasAulas || [
              { id: 101, title: "Estruturas de Controle", time: "09:45:00", date: "HOJE", duration: "120MIN", type: "Prática", status: "EM ANDAMENTO", color: "#F59E0B" }

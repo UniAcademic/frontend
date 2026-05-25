@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,6 +22,30 @@ const AlunoForm = () => {
   const [downloadingDoc, setDownloadingDoc] = useState(null);
   const [docError, setDocError] = useState('');
   const [docSuccess, setDocSuccess] = useState('');
+  const [documentosExistentes, setDocumentosExistentes] = useState([]);
+  const [docListLoading, setDocListLoading] = useState(false);
+  const [docUploadTipo, setDocUploadTipo] = useState('RG');
+  const [docUploadMidia, setDocUploadMidia] = useState('PNG');
+  const docFileRef = useRef(null);
+
+  const TIPOS_DOCUMENTO = ['RG', 'CPF', 'CNH'];
+  const TIPOS_MIDIA = ['PNG', 'JPEG', 'PDF'];
+  const MIDIA_ACCEPT = { PNG: 'image/png', JPEG: 'image/jpeg', PDF: 'application/pdf' };
+  const MIDIA_EXT = { PNG: '.png', JPEG: '.jpg', PDF: '.pdf' };
+
+  const fetchDocumentos = async () => {
+    if (!isEdit) return;
+    setDocListLoading(true);
+    try {
+      const docs = await api.listarDocumentosAlunoAPI(id);
+      setDocumentosExistentes(Array.isArray(docs) ? docs : []);
+    } catch (err) {
+      console.error('Erro ao listar documentos:', err);
+      setDocumentosExistentes([]);
+    } finally {
+      setDocListLoading(false);
+    }
+  };
 
   const {
     register,
@@ -92,6 +116,10 @@ const AlunoForm = () => {
     };
     fetchData();
   }, [id, isEdit, reset]);
+
+  useEffect(() => {
+    if (isEdit) fetchDocumentos();
+  }, [id, isEdit]);
 
   const onSubmit = async (formData) => {
     console.log('📝 Form submission attempted');
@@ -237,56 +265,59 @@ const AlunoForm = () => {
   };
 
   // Upload document
-  const handleUploadDoc = async (e, tipoDoc) => {
-    const file = e.target.files[0];
+  const handleUploadDoc = async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
-
-    // Detect format
-    let tipoMidia = 'PDF';
-    if (file.type.includes('jpeg') || file.type.includes('jpg')) {
-      tipoMidia = 'JPEG';
-    } else if (file.type.includes('png')) {
-      tipoMidia = 'PNG';
-    }
 
     setDocError('');
     setDocSuccess('');
-    setUploadingDoc(tipoDoc);
+    setUploadingDoc(docUploadTipo);
 
     try {
-      await api.enviarDocumentoAlunoAPI(id, file, tipoMidia, tipoDoc);
-      setDocSuccess(`Documento ${tipoDoc} enviado com sucesso!`);
-      
-      // Reload profile to update documents list
-      const updated = await api.getAlunoPorIdAPI(id);
-      setAlunoData(updated);
+      await api.enviarDocumentoAlunoAPI(id, file, docUploadMidia, docUploadTipo);
+      setDocSuccess(`Documento ${docUploadTipo} (${docUploadMidia}) enviado com sucesso!`);
+      await fetchDocumentos();
     } catch (err) {
       console.error(err);
-      setDocError(`Erro ao enviar documento ${tipoDoc}. Tente novamente.`);
+      setDocError(err?.response?.data?.message || `Erro ao enviar documento ${docUploadTipo}. Tente novamente.`);
     } finally {
       setUploadingDoc(null);
+      if (docFileRef.current) docFileRef.current.value = '';
     }
   };
 
   // Download document
-  const handleDownloadDoc = async (tipoDoc) => {
+  const handleDownloadDoc = async (doc) => {
+    if (!doc?.id) return;
+    const key = doc.id;
     setDocError('');
     setDocSuccess('');
-    setDownloadingDoc(tipoDoc);
+    setDownloadingDoc(key);
 
     try {
-      const blob = await api.baixarDocumentoAlunoAPI(id);
-      const url = window.URL.createObjectURL(new Blob([blob]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `documento_${tipoDoc}_aluno_${id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setDocSuccess(`Download do documento ${tipoDoc} iniciado!`);
+      const result = await api.baixarDocumentoAlunoAPI(doc.id);
+      const url = result?.url || result;
+      if (typeof url === 'string' && url.startsWith('http')) {
+        window.open(url, '_blank');
+      } else {
+        const blob = new Blob([result]);
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.setAttribute('download', doc.nome || `documento_${doc.tipoDocumento || 'doc'}`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+      }
+      setDocSuccess('Download iniciado!');
     } catch (err) {
       console.error(err);
-      setDocError(`Erro ao baixar documento ${tipoDoc}. O arquivo pode não ter sido enviado.`);
+      if (err?.response?.status === 404) {
+        setDocError('Documento não encontrado.');
+      } else {
+        setDocError('Erro ao baixar documento.');
+      }
     } finally {
       setDownloadingDoc(null);
     }
@@ -579,7 +610,7 @@ const AlunoForm = () => {
         {isEdit && (
           <div className="bg-white dark:bg-[#020617] p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
             <h2 className="text-xs font-black uppercase tracking-widest text-[#F59E0B] border-b border-slate-100 dark:border-slate-800 pb-3">
-               3. Gerenciamento de Documentos Integrados (S3 S3-Bucket)
+               3. Gerenciamento de Documentos
             </h2>
 
             {docError && (
@@ -593,48 +624,101 @@ const AlunoForm = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {['RG', 'CPF', 'CNH'].map((docType) => {
-                const isUploaded = alunoData?.documentos_ids?.some(dId => dId.includes(docType) || dId.length > 5); // Simplificando detecção
-                
-                return (
-                  <div key={docType} className="border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-[#0B0F19]/25 p-5 rounded-xl flex flex-col justify-between items-center text-center gap-4">
-                    <span className="material-symbols-outlined text-[32px] text-slate-400">description</span>
-                    <div>
-                      <h3 className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase">{docType}</h3>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">
-                        {isUploaded ? 'DISPONÍVEL NO S3' : 'PENDENTE DE ENVIO'}
-                      </p>
-                    </div>
+            {/* Upload de documento */}
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Enviar Documento</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Tipo de Documento</label>
+                  <select
+                    value={docUploadTipo}
+                    onChange={e => setDocUploadTipo(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#F59E0B]"
+                  >
+                    {TIPOS_DOCUMENTO.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Formato</label>
+                  <select
+                    value={docUploadMidia}
+                    onChange={e => setDocUploadMidia(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#F59E0B]"
+                  >
+                    {TIPOS_MIDIA.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <div className="w-full">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Arquivo</label>
+                    <input
+                      ref={docFileRef}
+                      type="file"
+                      accept={MIDIA_ACCEPT[docUploadMidia]}
+                      onChange={handleUploadDoc}
+                      disabled={!!uploadingDoc}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => docFileRef.current?.click()}
+                      disabled={!!uploadingDoc}
+                      className="w-full py-3 px-4 bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[10px] font-black uppercase tracking-widest rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        {uploadingDoc ? 'hourglass_top' : 'cloud_upload'}
+                      </span>
+                      {uploadingDoc ? 'ENVIANDO...' : 'SELECIONAR E ENVIAR'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                    <div className="flex flex-col gap-2 w-full">
-                      {isUploaded && (
+            {/* Documentos existentes */}
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Documentos Enviados</h3>
+              {docListLoading ? (
+                <div className="flex justify-center py-6">
+                  <div className="w-6 h-6 border-4 border-[#F59E0B] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : documentosExistentes.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {documentosExistentes.map((doc, idx) => {
+                    const tipoDoc = doc.tipoDocumento || doc.tipo_documento || '—';
+                    const nome = doc.nome || tipoDoc;
+                    const key = doc.id || idx;
+                    const isLoading = downloadingDoc === key;
+                    return (
+                      <div
+                        key={key}
+                        className="bg-slate-50/50 dark:bg-[#0B0F19]/50 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="material-symbols-outlined text-[20px] text-[#F59E0B]">description</span>
+                          <div>
+                            <p className="text-sm font-black text-slate-700 dark:text-white uppercase">{tipoDoc}</p>
+                            <p className="text-[9px] font-bold text-slate-400 truncate max-w-[150px]">{nome}</p>
+                          </div>
+                        </div>
                         <button
                           type="button"
-                          disabled={downloadingDoc === docType}
-                          onClick={() => handleDownloadDoc(docType)}
-                          className="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-[#F59E0B] dark:hover:bg-[#F59E0B] hover:text-[#0B0F19] dark:hover:text-[#0B0F19] transition-all text-[9px] font-black uppercase tracking-widest text-slate-500 rounded-lg flex items-center justify-center gap-2"
+                          onClick={() => handleDownloadDoc(doc)}
+                          disabled={isLoading}
+                          className="py-1.5 px-3 text-[9px] font-black uppercase tracking-widest rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-slate-600 dark:text-slate-300 hover:border-[#F59E0B] hover:text-[#F59E0B] transition-all disabled:opacity-50 flex items-center gap-1"
                         >
-                          <span className="material-symbols-outlined text-[14px]">cloud_download</span>
-                          {downloadingDoc === docType ? 'Baixando...' : 'Baixar'}
+                          <span className="material-symbols-outlined text-[12px]">
+                            {isLoading ? 'hourglass_top' : 'download'}
+                          </span>
+                          BAIXAR
                         </button>
-                      )}
-                      
-                      <label className="w-full py-2 bg-slate-850 border border-dashed border-slate-200 dark:border-slate-800 hover:border-[#F59E0B] cursor-pointer transition-all text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 rounded-lg flex items-center justify-center gap-2">
-                        <span className="material-symbols-outlined text-[14px]">cloud_upload</span>
-                        {uploadingDoc === docType ? 'Enviando...' : (isUploaded ? 'Substituir' : 'Enviar')}
-                        <input
-                          type="file"
-                          accept=".pdf,.png,.jpg,.jpeg"
-                          className="hidden"
-                          onChange={(e) => handleUploadDoc(e, docType)}
-                          disabled={uploadingDoc === docType}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                );
-              })}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-400 italic py-4">Nenhum documento enviado para este aluno.</p>
+              )}
             </div>
           </div>
         )}

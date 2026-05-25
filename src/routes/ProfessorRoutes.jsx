@@ -8,6 +8,7 @@ import ProfessorDisciplinas from '@/pages/professor/Disciplinas';
 import ProfessorFrequencia from '@/pages/professor/Frequencia';
 import ProfessorNotas from '@/pages/professor/Notas';
 import ProfessorHorario from '@/pages/professor/Horario';
+import Perfil from '@/pages/shared/Perfil';
 
 const ProfessorRoutes = () => {
   return (
@@ -20,6 +21,7 @@ const ProfessorRoutes = () => {
         <Route path="disciplina/:id/frequencia" element={<ProfessorFrequencia />} />
         <Route path="aula/:id" element={<ProfessorNotas />} />
         <Route path="horario" element={<ProfessorHorario />} />
+        <Route path="perfil" element={<Perfil />} />
       </Route>
     </Routes>
   );

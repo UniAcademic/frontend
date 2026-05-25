@@ -37,6 +37,7 @@ const AdminDashboard = () => {
       ['Alunos Ativos', 'Status', metrics.ativosAlunos],
       ['Alunos Inativos', 'Status', metrics.inativosAlunos],
       ['Total Professores', 'Geral', metrics.totalProfessores],
+      ['Total Coordenadores', 'Geral', metrics.totalCoordenadores],
       ['Total Turmas', 'Geral', metrics.totalTurmas],
       ['Total Disciplinas', 'Geral', metrics.totalDisciplinas],
       ...metrics.charts.alunosPorCurso.map(c => ['Distribuição Alunos', c.name, c.value]),
@@ -87,7 +88,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         
         {/* KPI 1 */}
         <div className="bg-white dark:bg-[#020617] p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4 relative overflow-hidden group">
@@ -118,6 +119,19 @@ const AdminDashboard = () => {
         </div>
 
         {/* KPI 3 */}
+        <div className="bg-white dark:bg-[#020617] p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4 relative overflow-hidden group">
+          <div className="flex justify-between items-start">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">COORDENADORES</p>
+            <span className="material-symbols-outlined text-blue-500">supervisor_account</span>
+          </div>
+          <p className="text-4xl font-black">{metrics.totalCoordenadores || 0}</p>
+          <div className="flex items-center gap-1">
+            <span className="material-symbols-outlined text-blue-500 text-sm">verified</span>
+            <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">GESTÃO <span className="text-slate-400 dark:text-slate-600 font-bold ml-1">ACADÊMICA</span></p>
+          </div>
+        </div>
+
+        {/* KPI 4 */}
         <div className="bg-white dark:bg-[#020617] p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-4 relative overflow-hidden group">
           <div className="flex justify-between items-start">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">TOTAL TURMAS</p>

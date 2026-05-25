@@ -34,6 +34,14 @@ const Roles = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [exporting, setExporting] = useState(false);
 
+  // Unlink Acessos Modal state
+  const [unlinkModalRoleId, setUnlinkModalRoleId] = useState(null);
+  const [unlinkModalRoleName, setUnlinkModalRoleName] = useState('');
+  const [unlinkRoleAcessos, setUnlinkRoleAcessos] = useState([]);
+  const [unlinkSelected, setUnlinkSelected] = useState([]);
+  const [unlinkSaving, setUnlinkSaving] = useState(false);
+  const [unlinkSearch, setUnlinkSearch] = useState('');
+
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
@@ -244,6 +252,73 @@ const Roles = () => {
       setEditSaving(false);
     }
   };
+
+  // Unlink modal functions
+  const openUnlinkModal = (role) => {
+    const acessosList = (role.acessos || role.acesso || []).map(a =>
+      typeof a === 'string' ? a : a.acesso || a.nome
+    );
+    setUnlinkRoleAcessos([...new Set(acessosList)]);
+    setUnlinkSelected([]);
+    setUnlinkModalRoleId(role.id);
+    setUnlinkModalRoleName(role.role || role.nome);
+    setUnlinkSearch('');
+  };
+
+  const closeUnlinkModal = () => {
+    setUnlinkModalRoleId(null);
+    setUnlinkModalRoleName('');
+    setUnlinkRoleAcessos([]);
+    setUnlinkSelected([]);
+    setUnlinkSearch('');
+  };
+
+  const toggleUnlinkAcesso = (acessoName) => {
+    setUnlinkSelected(prev =>
+      prev.includes(acessoName)
+        ? prev.filter(a => a !== acessoName)
+        : [...prev, acessoName]
+    );
+  };
+
+  const handleUnlinkAcessos = async () => {
+    if (unlinkSelected.length === 0) {
+      showToast('Selecione pelo menos um acesso para desvincular', 'error');
+      return;
+    }
+    setUnlinkSaving(true);
+    try {
+      // DELETE each selected acesso from the role
+      const results = await Promise.allSettled(
+        unlinkSelected.map(acesso =>
+          fetch(API_ENDPOINTS.ROLES.ACESSOS(unlinkModalRoleName), {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.accessToken}` },
+            body: JSON.stringify({ acessos: [acesso] })
+          }).then(res => {
+            if (!res.ok) throw new Error(`Erro ${res.status}`);
+            return res;
+          })
+        )
+      );
+      const failed = results.filter(r => r.status === 'rejected');
+      if (failed.length > 0 && failed.length === unlinkSelected.length) {
+        throw new Error('Falha ao desvincular os acessos');
+      }
+      closeUnlinkModal();
+      fetchRoles();
+      const removed = unlinkSelected.length - failed.length;
+      showToast(`${removed} acesso${removed !== 1 ? 's' : ''} desvinculado${removed !== 1 ? 's' : ''} com sucesso!`);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setUnlinkSaving(false);
+    }
+  };
+
+  const filteredUnlinkAcessos = unlinkRoleAcessos.filter(name =>
+    name.toLowerCase().includes(unlinkSearch.toLowerCase())
+  );
 
   // Filter acessos in the link modal
   const filteredAcessos = allAcessos.filter(a => {
@@ -546,6 +621,11 @@ const Roles = () => {
                           className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-700 flex items-center justify-center transition-colors" title="Vincular Acessos">
                           <span className="material-symbols-outlined text-[18px]">link</span>
                         </button>
+                        <button onClick={() => openUnlinkModal(r)}
+                          disabled={!(r.acessos || r.acesso || []).length}
+                          className="w-8 h-8 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 hover:text-red-700 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Desvincular Acessos">
+                          <span className="material-symbols-outlined text-[18px]">link_off</span>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -605,6 +685,122 @@ const Roles = () => {
               </button>
               <button type="button" onClick={cancelEdit}
                 className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all">
+                CANCELAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unlink Acessos Modal */}
+      {unlinkModalRoleId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-[#020617] w-full max-w-2xl p-8 rounded-3xl border border-red-200 dark:border-red-900/50 shadow-2xl relative flex flex-col max-h-[85vh]">
+            <button type="button" onClick={closeUnlinkModal} className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+              <span className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+
+            <div className="mb-6">
+              <h2 className="text-xl font-black uppercase tracking-tight text-red-600 dark:text-red-400 mb-1">Desvincular Acessos</h2>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                Role: <span className="text-red-500">{unlinkModalRoleName}</span> — Selecione os acessos para remover
+              </p>
+            </div>
+
+            {/* Search inside modal */}
+            <div className="relative mb-4">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+              <input
+                type="text"
+                placeholder="Filtrar acessos..."
+                value={unlinkSearch}
+                onChange={e => setUnlinkSearch(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 pl-10 pr-4 py-2.5 rounded-xl text-sm outline-none focus:ring-2 focus:ring-red-400"
+              />
+            </div>
+
+            {/* Selected count */}
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                {unlinkSelected.length} ACESSO{unlinkSelected.length !== 1 ? 'S' : ''} PARA REMOVER
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUnlinkSelected([...filteredUnlinkAcessos])}
+                  className="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-700 transition-colors"
+                >
+                  Selecionar todos
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">•</span>
+                <button
+                  type="button"
+                  onClick={() => setUnlinkSelected([])}
+                  className="text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  Limpar
+                </button>
+              </div>
+            </div>
+
+            {/* Acessos list */}
+            <div className="flex-1 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 min-h-[200px] max-h-[400px]">
+              {filteredUnlinkAcessos.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 uppercase text-[10px] font-black tracking-widest">
+                  {unlinkSearch ? 'Nenhum acesso encontrado com esse filtro' : 'Nenhum acesso vinculado a esta role'}
+                </div>
+              ) : (
+                filteredUnlinkAcessos.map((acessoName, idx) => {
+                  const isSelected = unlinkSelected.includes(acessoName);
+                  return (
+                    <label
+                      key={acessoName || idx}
+                      className={`flex items-center gap-4 px-5 py-3.5 cursor-pointer transition-colors ${
+                        isSelected
+                          ? 'bg-red-50 dark:bg-red-900/15'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/30'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleUnlinkAcesso(acessoName)}
+                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-red-500 focus:ring-red-400 shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded ${
+                          isSelected
+                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        }`}>
+                          {acessoName}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <span className="material-symbols-outlined text-red-500 text-[18px] shrink-0">remove_circle</span>
+                      )}
+                    </label>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer actions */}
+            <div className="flex gap-3 pt-5 mt-4 border-t border-slate-100 dark:border-slate-800/50">
+              <button
+                type="button"
+                onClick={handleUnlinkAcessos}
+                disabled={unlinkSaving || unlinkSelected.length === 0}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-red-500/20 flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">link_off</span>
+                {unlinkSaving ? 'REMOVENDO...' : `DESVINCULAR ${unlinkSelected.length} ACESSO${unlinkSelected.length !== 1 ? 'S' : ''}`}
+              </button>
+              <button
+                type="button"
+                onClick={closeUnlinkModal}
+                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[12px] font-black uppercase tracking-widest py-4 px-6 rounded-xl transition-all"
+              >
                 CANCELAR
               </button>
             </div>

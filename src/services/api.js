@@ -38,16 +38,50 @@ const pickEffectiveMockUserId = ({ mockUserId, rawId, role }) => {
 const api = {
   // ==================== DASHBOARD METRICS ====================
   getDashboardMetrics: async () => {
-    await delay();
-    const { alunos, professores, turmas, disciplinas, notas, cursos, aulas } = db;
+    // Fetch real counts from ms-tipo-usuario APIs
+    const [alunosRes, profsRes, coordsRes] = await Promise.allSettled([
+      httpTipoUsuario.get('/alunos?page=0&size=1&sort=usuarioId'),
+      httpTipoUsuario.get('/professores?page=0&size=1&sort=usuarioId'),
+      httpTipoUsuario.get('/coordenadores?page=0&size=1&sort=usuarioId'),
+    ]);
 
-    // 1. Alunos por Curso
+    const totalAlunos = alunosRes.status === 'fulfilled' ? (alunosRes.value.data?.totalElements ?? 0) : 0;
+    const totalProfessores = profsRes.status === 'fulfilled' ? (profsRes.value.data?.totalElements ?? 0) : 0;
+    const totalCoordenadores = coordsRes.status === 'fulfilled' ? (coordsRes.value.data?.totalElements ?? 0) : 0;
+
+    // Try to fetch all alunos to compute status breakdown
+    let allAlunos = [];
+    try {
+      const { data } = await httpTipoUsuario.get(`/alunos?page=0&size=${Math.max(totalAlunos, 50)}&sort=usuarioId`);
+      allAlunos = data?.content || [];
+    } catch { /* fallback empty */ }
+
+    const ativosAlunos = allAlunos.filter(a => a.ativo !== false).length || totalAlunos;
+    const inativosAlunos = allAlunos.filter(a => a.ativo === false).length || 0;
+
+    // Try to fetch all professores for department breakdown
+    let allProfs = [];
+    try {
+      const { data } = await httpTipoUsuario.get(`/professores?page=0&size=${Math.max(totalProfessores, 50)}&sort=usuarioId`);
+      allProfs = data?.content || [];
+    } catch { /* fallback empty */ }
+
+    // Professores por departamento (from real data)
+    const deptMap = {};
+    allProfs.forEach(p => {
+      const dept = p.departamento || p.department || 'Geral';
+      deptMap[dept] = (deptMap[dept] || 0) + 1;
+    });
+    const professoresPorDepartamento = Object.entries(deptMap).map(([name, value]) => ({ name, value }));
+
+    // Use mock data for charts that have no real API yet
+    const { turmas = [], disciplinas = [], notas = [], cursos = [], alunos: mockAlunos = [] } = db;
+
     const alunosPorCurso = cursos.map(c => ({
       name: c.name,
-      value: alunos.filter(a => Number(a.cursoId) === Number(c.id)).length
+      value: mockAlunos.filter(a => Number(a.cursoId) === Number(c.id)).length
     }));
 
-    // 2. Ocupação de Turmas
     const ocupacaoTurmas = turmas.map(t => ({
       name: t.name,
       ocupacao: Math.round((t.studentsCount / t.capacity) * 100),
@@ -55,30 +89,20 @@ const api = {
       capacidade: t.capacity
     }));
 
-    // 3. Média de Notas por Turma
     const mediaNotasPorTurma = turmas.map(t => {
       const disciplinasTurma = disciplinas.filter(d => Number(d.turmaId) === Number(t.id));
       const idsDisciplinas = disciplinasTurma.map(d => Number(d.id));
       const notasTurma = notas.filter(n => idsDisciplinas.includes(Number(n.disciplinaId)));
-      
-      const media = notasTurma.length > 0 
-        ? notasTurma.reduce((acc, n) => acc + n.nota, 0) / notasTurma.length 
+      const media = notasTurma.length > 0
+        ? notasTurma.reduce((acc, n) => acc + n.nota, 0) / notasTurma.length
         : 0;
       return { name: t.name, media: parseFloat(media.toFixed(1)) };
     }).sort((a, b) => b.media - a.media).slice(0, 5);
 
-    // 4. Professores por Departamento
-    const depts = [...new Set(professores.map(p => p.department))];
-    const professoresPorDepartamento = depts.map(d => ({
-      name: d,
-      value: professores.filter(p => p.department === d).length
-    }));
-
-    // 5. Status Acadêmico (Distribuição de Notas por Aluno)
-    const mediasAlunos = alunos.map(a => {
+    const mediasAlunos = mockAlunos.map(a => {
       const notasAluno = notas.filter(n => Number(n.alunoId) === Number(a.id));
-      const media = notasAluno.length > 0 
-        ? notasAluno.reduce((acc, n) => acc + n.nota, 0) / notasAluno.length 
+      const media = notasAluno.length > 0
+        ? notasAluno.reduce((acc, n) => acc + n.nota, 0) / notasAluno.length
         : 0;
       return media;
     });
@@ -91,10 +115,11 @@ const api = {
     ];
 
     return {
-      totalAlunos: alunos.length,
-      ativosAlunos: alunos.filter(a => a.status === 'Ativo').length,
-      inativosAlunos: alunos.filter(a => a.status === 'Inativo').length,
-      totalProfessores: professores.length,
+      totalAlunos,
+      ativosAlunos,
+      inativosAlunos,
+      totalProfessores,
+      totalCoordenadores,
       totalTurmas: turmas.length,
       ativasTurmas: turmas.filter(t => t.status === 'Ativa').length,
       totalDisciplinas: disciplinas.length,
@@ -102,7 +127,7 @@ const api = {
         alunosPorCurso,
         ocupacaoTurmas,
         mediaNotasPorTurma,
-        professoresPorDepartamento,
+        professoresPorDepartamento: professoresPorDepartamento.length > 0 ? professoresPorDepartamento : [{ name: 'Geral', value: totalProfessores }],
         studentStatus
       }
     };
@@ -498,10 +523,13 @@ const api = {
   },
 
   // DOCUMENTOS
-  baixarDocumentoAlunoAPI: async (id) => {
-    const { data } = await httpTipoUsuario.get(`/documentos/${id}/alunos`, {
-      responseType: 'blob'
-    });
+  listarDocumentosAlunoAPI: async (id) => {
+    const { data } = await httpTipoUsuario.get(`/documentos/alunos/${id}`);
+    return data;
+  },
+
+  baixarDocumentoAlunoAPI: async (docId) => {
+    const { data } = await httpTipoUsuario.get(`/documentos/${docId}/alunos`);
     return data;
   },
 

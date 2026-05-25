@@ -14,8 +14,31 @@ const StudentDashboard = () => {
 
     const fetchData = async () => {
       try {
+        // Try real API first using matricula
+        let realProfile = null;
+        if (user.matricula) {
+          try {
+            realProfile = await api.getAlunoPorMatriculaAPI(user.matricula);
+          } catch { /* fallback to mock */ }
+        }
+
         const studentData = await api.getStudentDashboard(user.id);
-        setData(studentData);
+        
+        if (realProfile && studentData) {
+          // Merge real profile into mock dashboard data
+          setData({
+            ...studentData,
+            aluno: {
+              ...studentData.aluno,
+              name: realProfile.nome || realProfile.name || studentData.aluno?.name,
+              email: realProfile.email || studentData.aluno?.email,
+              status: realProfile.ativo !== false ? 'ATIVO' : 'INATIVO',
+              matricula: realProfile.matricula || user.matricula,
+            }
+          });
+        } else {
+          setData(studentData);
+        }
       } catch (error) {
         console.error("Error fetching student dashboard:", error);
       } finally {

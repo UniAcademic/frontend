@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/services/api';
 
@@ -7,6 +7,21 @@ const ROLE_LABELS = {
   coordenador: 'Coordenador',
   professor: 'Professor',
   student: 'Estudante',
+};
+
+const TIPOS_DOCUMENTO = ['RG', 'CPF', 'CNH'];
+const TIPOS_MIDIA = ['PNG', 'JPEG', 'PDF'];
+
+const MIDIA_ACCEPT = {
+  PNG: 'image/png',
+  JPEG: 'image/jpeg',
+  PDF: 'application/pdf',
+};
+
+const MIDIA_EXT = {
+  PNG: '.png',
+  JPEG: '.jpg',
+  PDF: '.pdf',
 };
 
 const Perfil = () => {
@@ -23,6 +38,46 @@ const Perfil = () => {
     cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', pais: 'Brasil'
   });
   const [saveSuccess, setSaveSuccess] = useState('');
+
+  // Document upload states (student only)
+  const [docTipoDocumento, setDocTipoDocumento] = useState('RG');
+  const [docTipoMidia, setDocTipoMidia] = useState('PNG');
+  const [docUploading, setDocUploading] = useState(false);
+  const [docError, setDocError] = useState('');
+  const [docSuccess, setDocSuccess] = useState('');
+  const [docDownloading, setDocDownloading] = useState({});
+  const [documentosExistentes, setDocumentosExistentes] = useState([]);
+  const [docListLoading, setDocListLoading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Pegar o ID do aluno do JWT para usar nos endpoints de documentos
+  const getAlunoIdFromToken = () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return user?.id || null;
+      const [, payload] = token.split('.');
+      const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+      return decoded.id || decoded.sub || user?.id || null;
+    } catch {
+      return user?.id || null;
+    }
+  };
+
+  const fetchDocumentos = async () => {
+    if (user?.role !== 'student') return;
+    const alunoId = getAlunoIdFromToken();
+    if (!alunoId) return;
+    setDocListLoading(true);
+    try {
+      const docs = await api.listarDocumentosAlunoAPI(alunoId);
+      setDocumentosExistentes(Array.isArray(docs) ? docs : []);
+    } catch (err) {
+      console.error('Erro ao listar documentos:', err);
+      setDocumentosExistentes([]);
+    } finally {
+      setDocListLoading(false);
+    }
+  };
 
   const fetchProfileData = async () => {
     try {
@@ -50,6 +105,7 @@ const Perfil = () => {
 
       if (data) {
         setProfile(data);
+
         setEditForm({
           nome: data.nome || data.name || '',
           email: data.email || '',
@@ -77,6 +133,12 @@ const Perfil = () => {
   useEffect(() => {
     fetchProfileData();
   }, [user]);
+
+  useEffect(() => {
+    if (profile && user?.role === 'student') {
+      fetchDocumentos();
+    }
+  }, [profile]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -153,6 +215,59 @@ const Perfil = () => {
       setError('Erro ao salvar as alterações do perfil.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDocUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setDocUploading(true);
+    setDocError('');
+    setDocSuccess('');
+    try {
+      const alunoId = getAlunoIdFromToken();
+      await api.enviarDocumentoAlunoAPI(alunoId, file, docTipoMidia, docTipoDocumento);
+      setDocSuccess(`Documento ${docTipoDocumento} enviado com sucesso!`);
+      await fetchDocumentos();
+    } catch (err) {
+      console.error('Erro ao enviar documento:', err);
+      setDocError(err?.response?.data?.message || 'Erro ao enviar o documento.');
+    } finally {
+      setDocUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDocDownload = async (doc) => {
+    if (!doc?.id) return;
+    const key = doc.id;
+    setDocDownloading(prev => ({ ...prev, [key]: true }));
+    setDocError('');
+    try {
+      const result = await api.baixarDocumentoAlunoAPI(doc.id);
+      const url = result?.url || result;
+      if (typeof url === 'string' && url.startsWith('http')) {
+        window.open(url, '_blank');
+      } else {
+        const blob = new Blob([result]);
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = doc.nome || `documento_${doc.tipoDocumento || 'doc'}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(blobUrl);
+      }
+    } catch (err) {
+      console.error('Erro ao baixar documento:', err);
+      if (err?.response?.status === 404) {
+        setDocError('Documento não encontrado.');
+      } else {
+        setDocError('Erro ao baixar o documento.');
+      }
+    } finally {
+      setDocDownloading(prev => ({ ...prev, [key]: false }));
     }
   };
 
@@ -434,6 +549,147 @@ const Perfil = () => {
           </div>
         )}
       </div>
+
+      {/* SEÇÃO DE DOCUMENTOS — apenas para estudantes */}
+      {user?.role === 'student' && (
+        <div className="bg-white dark:bg-[#020617] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-[#F59E0B]/10 to-[#F59E0B]/5 dark:from-[#F59E0B]/5 dark:to-transparent p-6 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px] text-[#F59E0B]">folder_open</span>
+              MEUS DOCUMENTOS
+            </h3>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+              ENVIE E BAIXE SEUS DOCUMENTOS PESSOAIS
+            </p>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {docSuccess && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                {docSuccess}
+              </div>
+            )}
+            {docError && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 font-bold text-sm">
+                {docError}
+              </div>
+            )}
+
+            {/* Upload de documento */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-widest text-[#F59E0B] border-b border-slate-100 dark:border-slate-800 pb-2">
+                Enviar Documento
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Tipo de Documento</label>
+                  <select
+                    value={docTipoDocumento}
+                    onChange={e => setDocTipoDocumento(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#F59E0B]"
+                  >
+                    {TIPOS_DOCUMENTO.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Formato do Arquivo</label>
+                  <select
+                    value={docTipoMidia}
+                    onChange={e => setDocTipoMidia(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-lg text-sm font-bold text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#F59E0B]"
+                  >
+                    {TIPOS_MIDIA.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-end">
+                  <div className="w-full">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Arquivo</label>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept={MIDIA_ACCEPT[docTipoMidia]}
+                      onChange={handleDocUpload}
+                      disabled={docUploading}
+                      className="hidden"
+                      id="doc-upload-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={docUploading}
+                      className="w-full py-3 px-4 bg-[#F59E0B] hover:bg-[#D97706] text-[#020617] text-[10px] font-black uppercase tracking-widest rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">
+                        {docUploading ? 'hourglass_top' : 'cloud_upload'}
+                      </span>
+                      {docUploading ? 'ENVIANDO...' : 'SELECIONAR E ENVIAR'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Documentos existentes */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-widest text-[#F59E0B] border-b border-slate-100 dark:border-slate-800 pb-2">
+                Documentos Enviados
+              </h4>
+              {docListLoading ? (
+                <div className="flex justify-center py-6">
+                  <div className="w-6 h-6 border-4 border-[#F59E0B] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : documentosExistentes.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {documentosExistentes.map((doc, idx) => {
+                    const tipoDoc = doc.tipoDocumento || doc.tipo_documento || '—';
+                    const nome = doc.nome || tipoDoc;
+                    const key = doc.id || idx;
+                    const isLoading = docDownloading[key];
+                    return (
+                      <div
+                        key={key}
+                        className="group bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex flex-col gap-4 hover:border-[#F59E0B]/50 hover:shadow-md hover:shadow-[#F59E0B]/5 transition-all"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 dark:bg-[#F59E0B]/5 flex items-center justify-center shrink-0">
+                            <span className="material-symbols-outlined text-[22px] text-[#F59E0B]">description</span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-black text-slate-700 dark:text-white uppercase">{tipoDoc}</p>
+                            <p className="text-[10px] font-medium text-slate-400 truncate" title={nome}>{nome}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDocDownload(doc)}
+                          disabled={isLoading}
+                          className="w-full py-2.5 px-4 text-[10px] font-black uppercase tracking-widest rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#020617] text-slate-600 dark:text-slate-300 hover:border-[#F59E0B] hover:bg-[#F59E0B]/5 hover:text-[#F59E0B] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          <span className="material-symbols-outlined text-[14px]">
+                            {isLoading ? 'hourglass_top' : 'download'}
+                          </span>
+                          {isLoading ? 'BAIXANDO...' : 'BAIXAR'}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <span className="material-symbols-outlined text-[40px] text-slate-300 dark:text-slate-700 mb-3">folder_off</span>
+                  <p className="text-sm font-bold text-slate-400 dark:text-slate-500">Nenhum documento enviado ainda.</p>
+                  <p className="text-[10px] text-slate-300 dark:text-slate-600 mt-1">Use o formulário acima para enviar seus documentos.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

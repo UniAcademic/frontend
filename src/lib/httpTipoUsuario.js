@@ -21,6 +21,7 @@ httpTipoUsuario.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log('🔍 httpTipoUsuario REQUEST:', config.method?.toUpperCase(), config.baseURL + config.url, '| Token present:', !!token, '| Token (first 20):', token?.substring(0, 20));
   return config;
 });
 

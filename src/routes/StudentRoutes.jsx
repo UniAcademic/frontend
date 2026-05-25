@@ -6,6 +6,7 @@ import StudentDisciplina from '@/pages/student/Disciplina';
 import StudentBoletim from '@/pages/student/Boletim';
 import StudentHorario from '@/pages/student/Horario';
 import StudentEmenta from '@/pages/student/Ementa';
+import Perfil from '@/pages/shared/Perfil';
 
 const StudentRoutes = () => {
   return (
@@ -17,6 +18,7 @@ const StudentRoutes = () => {
         <Route path="horario" element={<StudentHorario />} />
         <Route path="ementa" element={<StudentEmenta />} />
         <Route path="ementa/:id" element={<StudentEmenta />} />
+        <Route path="perfil" element={<Perfil />} />
       </Route>
     </Routes>
   );
